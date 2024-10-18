@@ -52,8 +52,7 @@ See also
 
 ---
 # kubeflow_pipeline
-
-[![codecov](https://codecov.io/gh/ajperry2/kubeflow_pipeline/branch/main/graph/badge.svg?token=kubeflow_pipeline_token_here)](https://codecov.io/gh/ajperry2/kubeflow_pipeline)
+[![codecov](https://codecov.io/gh/ajperry2/kubeflow_pipeline/branch/main/graph/badge.svg?token=QW6023LI5T)](https://codecov.io/gh/ajperry2/kubeflow_pipeline)
 [![CI](https://github.com/ajperry2/kubeflow_pipeline/actions/workflows/main.yml/badge.svg)](https://github.com/ajperry2/kubeflow_pipeline/actions/workflows/main.yml)
 
 Awesome kubeflow_pipeline created by ajperry2
