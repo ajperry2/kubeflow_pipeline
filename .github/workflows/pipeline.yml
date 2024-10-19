@@ -18,13 +18,13 @@ on:
         type: string
   workflow_call:
     secrets:
-      deploykf-host:
+      deploykf_host:
         description: 'The Host Where Deploykf is running'
         required: true
-      deploykf-user:
+      deploykf_user:
         description: 'The user launching the pipeline'
         required: true
-      deploykf-password:
+      deploykf_password:
         description: 'The users password launching the pipeline'
         required: true
 
@@ -45,7 +45,7 @@ jobs:
         run: make lint
 
         with:
-          deploykf_host: ${{ secrets.deploykf-host }}
-          deploykf_user: ${{ secrets.deploykf-user }}
-          deploykf_password: ${{ secrets.deploykf-password }}
+          deploykf_host: ${{ secrets.deploykf_host }}
+          deploykf_user: ${{ secrets.deploykf_user }}
+          deploykf_password: ${{ secrets.deploykf_password }}
           deploykf_namespace: ${{ inputs.namespace }}
