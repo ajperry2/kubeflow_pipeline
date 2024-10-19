@@ -1,0 +1,51 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Pipline
+
+# Controls when the workflow will run
+on:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'True to print to STDOUT'
+        required: true
+        type: string
+      experiment:
+        description: 'True to print to STDOUT'
+        required: true
+        type: string
+  workflow_call:
+    secrets:
+      deploykf-host:
+        description: 'The Host Where Deploykf is running'
+        required: true
+      deploykf-user:
+        description: 'The user launching the pipeline'
+        required: true
+      deploykf-password:
+        description: 'The users password launching the pipeline'
+        required: true
+
+jobs:
+  linter:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+      - name: Install project
+        run: make install
+      - name: Run linter
+        run: make lint
+
+        with:
+          deploykf_host: ${{ secrets.deploykf-host }}
+          deploykf_user: ${{ secrets.deploykf-user }}
+          deploykf_password: ${{ secrets.deploykf-password }}
+          deploykf_namespace: ${{ inputs.namespace }}

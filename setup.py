@@ -40,7 +40,7 @@ setup(
     packages=find_packages(exclude=["tests", ".github"]),
     install_requires=read_requirements("requirements.txt"),
     entry_points={
-        "console_scripts": ["kubeflow_pipeline = kubeflow_pipeline.__main__:main"]
+        "console_scripts": ["kubeflow_pipeline = kubeflow_pipeline.pipeline:launch"]
     },
     extras_require={"test": read_requirements("requirements-test.txt")},
 )
