@@ -1,4 +1,8 @@
+import os
+
 from kfp import dsl
+
+from .utils import KFPClientManager
 
 
 @dsl.component
@@ -7,10 +11,12 @@ def say_hello(name: str) -> str:
     print(hello_text)
     return hello_text
 
+
 @dsl.pipeline
 def pipeline_func(recipient: str) -> str:
     return say_hello(name=recipient).output
-    
+
+
 def launch():  # pragma: no cover
     """
     The main function executes on commands:
@@ -26,7 +32,6 @@ def launch():  # pragma: no cover
     deploykf_namespace = os.environ["INPUT_DEPLOYKF_NAMESPACE"]
     deploykf_username = os.environ.get("INPUT_DEPLOYKF_USERNAME", "")
     deploykf_password = os.environ.get("INPUT_DEPLOYKF_PASSWORD", "")
-    use_out_of_band = deploykf_username == "" or deploykf_password == ""
 
     # initialize a credentials instance and client
 
@@ -34,9 +39,9 @@ def launch():  # pragma: no cover
     # I am not too concerned about MITM attacks (so lack of ssl encryption is
     # fine for now). If others are connecting over the internet, be sure to
     # Setup https and set "skip_tls_verify" to False
-    print("https://"+deploykf_host+"/pipeline")
+    print("https://" + deploykf_host + "/pipeline")
     kfp_client_manager = KFPClientManager(
-        api_url="https://"+deploykf_host+"/pipeline",
+        api_url="https://" + deploykf_host + "/pipeline",
         skip_tls_verify=False,
         dex_username=deploykf_username,
         dex_password=deploykf_password,
@@ -50,7 +55,9 @@ def launch():  # pragma: no cover
     run_name = os.environ["INPUT_RUN"]
     # Make experiment if it does not exist
     try:
-        kfp_client.get_experiment(experiment_name=experiment_name, namespace=deploykf_namespace)
+        kfp_client.get_experiment(
+            experiment_name=experiment_name, namespace=deploykf_namespace
+        )
     except ValueError:
         kfp_client.create_experiment(
             name=experiment_name, namespace=deploykf_namespace

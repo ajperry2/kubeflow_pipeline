@@ -9,7 +9,8 @@ import time
 from typing import Optional, Tuple
 from urllib.parse import urlencode, urlsplit
 
-import requests
+import kfp
+import requests  # type: ignore
 import urllib3
 from kubernetes.client import configuration
 from requests_oauthlib import OAuth2Session
@@ -20,11 +21,6 @@ try:
 except ImportError:
     # for kubeflow pipelines v1
     from kfp.auth import TokenCredentialsBase
-
-from kfp import Client
-import kfp
-
-__all__ = ["KFPClientManager", "DeployKFCredentialsOutOfBand"]
 
 
 class KFPClientManager:
@@ -47,7 +43,7 @@ class KFPClientManager:
         :param skip_tls_verify: if True, skip TLS verification
         :param dex_username: the Dex username
         :param dex_password: the Dex password
-        :param dex_auth_type: the auth type to use if Dex has multiple enabled, one of: ['ldap', 'local']
+        :param dex_auth_type: the auth type, one of: ['ldap', 'local']
         """
         self._api_url = api_url
         self._skip_tls_verify = skip_tls_verify
@@ -63,13 +59,13 @@ class KFPClientManager:
         # ensure `dex_default_auth_type` is valid
         if self._dex_auth_type not in ["ldap", "local"]:
             raise ValueError(
-                f"Invalid `dex_auth_type` '{self._dex_auth_type}', must be one of: ['ldap', 'local']"
+                f"Invalid `dex_auth_type` '{self._dex_auth_type}'"
             )
 
     def _get_session_cookies(self) -> str:
         """
         Get the session cookies by authenticating against Dex
-        :return: a string of session cookies in the form "key1=value1; key2=value2"
+        :return: a string of session cookies in the form "key1=value1;"
         """
 
         # use a persistent session (for cookies)
@@ -77,23 +73,27 @@ class KFPClientManager:
 
         # GET the api_url, which should redirect to Dex
         resp = s.get(
-            self._api_url, allow_redirects=True, verify=not self._skip_tls_verify
+            self._api_url,
+            allow_redirects=True,
+            verify=not self._skip_tls_verify,
         )
         if resp.status_code == 200:
             pass
         elif resp.status_code == 403:
             # if we get 403, we might be at the oauth2-proxy sign-in page
-            # the default path to start the sign-in flow is `/oauth2/start?rd=<url>`
+            # the default path to start the sign-in flow is `/oauth2/start?rd=`
             url_obj = urlsplit(resp.url)
             url_obj = url_obj._replace(
                 path="/oauth2/start", query=urlencode({"rd": url_obj.path})
             )
             resp = s.get(
-                url_obj.geturl(), allow_redirects=True, verify=not self._skip_tls_verify
+                url_obj.geturl(),
+                allow_redirects=True,
+                verify=not self._skip_tls_verify,
             )
         else:
             raise RuntimeError(
-                f"HTTP status code '{resp.status_code}' for GET against: {self._api_url}"
+                f"HTTP status '{resp.status_code}' for GET: {self._api_url}"
             )
 
         # if we were NOT redirected, then the endpoint is unsecured
@@ -105,7 +105,9 @@ class KFPClientManager:
         url_obj = urlsplit(resp.url)
         if re.search(r"/auth$", url_obj.path):
             url_obj = url_obj._replace(
-                path=re.sub(r"/auth$", f"/auth/{self._dex_auth_type}", url_obj.path)
+                path=re.sub(
+                    r"/auth$", f"/auth/{self._dex_auth_type}", url_obj.path
+                )
             )
 
         # if we are at `../auth/xxxx/login` path, then we are at the login page
@@ -114,11 +116,13 @@ class KFPClientManager:
         else:
             # otherwise, we need to follow a redirect to the login page
             resp = s.get(
-                url_obj.geturl(), allow_redirects=True, verify=not self._skip_tls_verify
+                url_obj.geturl(),
+                allow_redirects=True,
+                verify=not self._skip_tls_verify,
             )
             if resp.status_code != 200:
                 raise RuntimeError(
-                    f"HTTP status code '{resp.status_code}' for GET against: {url_obj.geturl()}"
+                    f"HTTP '{resp.status_code}' for GET: {url_obj.geturl()}"
                 )
             dex_login_url = resp.url
 
@@ -131,10 +135,11 @@ class KFPClientManager:
         )
         if resp.status_code != 200:
             raise RuntimeError(
-                f"HTTP status code '{resp.status_code}' for POST against: {dex_login_url}"
+                f"HTTP '{resp.status_code}' for POST: {dex_login_url}"
             )
 
-        # if we were NOT redirected, then the login credentials were probably invalid
+        # if we were NOT redirected
+        # then the login credentials were probably invalid
         if len(resp.history) == 0:
             raise RuntimeError(
                 f"Login credentials are probably invalid - "
@@ -155,7 +160,7 @@ class KFPClientManager:
             )
             if resp.status_code != 200:
                 raise RuntimeError(
-                    f"HTTP status code '{resp.status_code}' for POST against: {url_obj.geturl()}"
+                    f"HTTP '{resp.status_code}' for POST: {url_obj.geturl()}"
                 )
 
         return "; ".join([f"{c.name}={c.value}" for c in s.cookies])
@@ -164,10 +169,11 @@ class KFPClientManager:
         try:
             session_cookies = self._get_session_cookies()
         except Exception as ex:
-            raise RuntimeError(f"Failed to get Dex session cookies") from ex
+            raise RuntimeError("Failed to get Dex session cookies") from ex
 
         # monkey patch the kfp.Client to support disabling SSL verification
-        # kfp only added support in v2: https://github.com/kubeflow/pipelines/pull/7174
+        # kfp only added support in v2:
+        # https://github.com/kubeflow/pipelines/pull/7174
         original_load_config = kfp.Client._load_config
 
         def patched_load_config(client_self, *args, **kwargs):
@@ -334,7 +340,7 @@ class DeployKFCredentialsOutOfBand(TokenCredentialsBase):
     def _refresh_token(self, oauth_session: OAuth2Session) -> Optional[dict]:
         """
         Attempt to refresh the provided token.
-        https://requests-oauthlib.readthedocs.io/en/latest/oauth2_workflow.html#refreshing-tokens
+        https://requests-oauthlib.readthedocs.io/en/latest/oauth2_workflow.html
         """
         if not oauth_session.token.get("refresh_token", None):
             return None
@@ -435,3 +441,6 @@ class DeployKFCredentialsOutOfBand(TokenCredentialsBase):
     def refresh_api_key_hook(self, config: configuration.Configuration):
         config.verify_ssl = not self.skip_tls_verify
         config.api_key["authorization"] = self.get_token()
+
+
+__all__ = ["KFPClientManager", "DeployKFCredentialsOutOfBand"]
