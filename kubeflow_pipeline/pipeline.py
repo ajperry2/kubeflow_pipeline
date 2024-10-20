@@ -4,6 +4,7 @@ from kfp import dsl
 
 from .utils import KFPClientManager
 
+
 @dsl.component(base_image="python:3.10")
 def say_hello(name: str) -> str:
     hello_text = f"Hello, {name}!"
