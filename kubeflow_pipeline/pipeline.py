@@ -28,7 +28,7 @@ def launch():  # pragma: no cover
     """
     assert "DEPLOYKF_HOST" in os.environ, "Host of deploykf instance required"
     assert "DEPLOYKF_NS" in os.environ, "Deploykf namespace required"
-    deploykf_host = os.environ["INPUT_DEPLOYKF_HOST"]
+    deploykf_host = os.environ["deploykf_host"]
     deploykf_namespace = os.environ["INPUT_DEPLOYKF_NAMESPACE"]
     deploykf_username = os.environ.get("INPUT_DEPLOYKF_USERNAME", "")
     deploykf_password = os.environ.get("INPUT_DEPLOYKF_PASSWORD", "")
