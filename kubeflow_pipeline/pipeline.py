@@ -26,12 +26,18 @@ def launch():  # pragma: no cover
 
     You can change this function to do whatever you want.
     """
-    assert "DEPLOYKF_HOST" in os.environ, "Host of deploykf instance required"
-    assert "DEPLOYKF_NS" in os.environ, "Deploykf namespace required"
+    assert "deploykf_host" in os.environ, "Host of deploykf instance required"
+    assert "deploykf_namespace" in os.environ, "Name of Experiment required"
+    assert "deploykf_user" in os.environ, "Deploykf username required"
+    assert "deploykf_password" in os.environ, "Deploykf password required"
+    assert "deploykf_experiment" in os.environ, "Deploykf experiment required"
+    assert "deploykf_run" in os.environ, "Deploykf run required"
     deploykf_host = os.environ["deploykf_host"]
-    deploykf_namespace = os.environ["INPUT_DEPLOYKF_NAMESPACE"]
-    deploykf_username = os.environ.get("INPUT_DEPLOYKF_USERNAME", "")
-    deploykf_password = os.environ.get("INPUT_DEPLOYKF_PASSWORD", "")
+    deploykf_namespace = os.environ["deploykf_namespace"]
+    deploykf_username = os.environ.get("deploykf_user")
+    deploykf_password = os.environ.get("deploykf_password")
+    deploykf_experiment = os.environ.get("deploykf_experiment")
+    deploykf_run= os.environ.get("deploykf_run")
 
     # initialize a credentials instance and client
 
@@ -48,14 +54,10 @@ def launch():  # pragma: no cover
     )
     kfp_client = kfp_client_manager.create_kfp_client()
     # Get definition of experiment/run
-    assert "INPUT_EXPERIMENT" in os.environ, "Name of Experiment required"
-    assert "INPUT_RUN" in os.environ, "Name of run required"
-    experiment_name = os.environ["INPUT_EXPERIMENT"]
-    run_name = os.environ["INPUT_RUN"]
     # Make experiment if it does not exist
     try:
         kfp_client.get_experiment(
-            experiment_name=experiment_name, namespace=deploykf_namespace
+            experiment_name=deploykf_experiment, namespace=deploykf_namespace
         )
     except ValueError:
         kfp_client.create_experiment(
@@ -65,6 +67,6 @@ def launch():  # pragma: no cover
         pipeline_func=pipeline_func,
         arguments={"recipient": "github"},
         experiment_name=experiment_name,
-        run_name=run_name,
+        run_name=deploykf_run,
         namespace=deploykf_namespace,
     )

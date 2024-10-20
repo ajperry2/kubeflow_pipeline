@@ -9,13 +9,13 @@ on:
   workflow_dispatch:
     inputs:
       run:
-        description: 'Experiment this run will be called'
+        description: 'Name of this run'
         required: true
         type: string
-      namespace:
-        description: 'The namespace for grouping the pipeline'
+      experiment:
+        description: 'The name of this experiment the pipeline'
         required: true
-        default: 'test'
+        default: 'experiment'
 
   workflow_call:
     secrets:
@@ -27,6 +27,9 @@ on:
         required: true
       deploykf_password:
         description: 'The users password launching the pipeline'
+        required: true
+      deploykf_namespace:
+        description: 'The namespace launching the pipeline'
         required: true
         
 jobs:
@@ -49,5 +52,6 @@ jobs:
           deploykf_host: ${{ secrets.deploykf_host }}
           deploykf_user: ${{ secrets.deploykf_user }}
           deploykf_password: ${{ secrets.deploykf_password }}
-          deploykf_namespace: ${{ inputs.namespace }}
+          deploykf_namespace: ${{ secrets.deploykf_namespace }}
+          deploykf_experiment: ${{ inputs.experiment }}
           deploykf_run: ${{ inputs.run }}
