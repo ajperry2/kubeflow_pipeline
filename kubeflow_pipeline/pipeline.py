@@ -8,13 +8,14 @@ from .utils import KFPClientManager
 @dsl.component
 def say_hello(name: str) -> str:
     hello_text = f"Hello, {name}!"
-    print(hello_text)
     return hello_text
 
 
 @dsl.pipeline
 def pipeline_func(recipient: str) -> str:
-    return say_hello(name=recipient).output
+    hello_task = say_hello(name=recipient)
+    hello_task.set_caching_options(False)
+    return hello_task.output
 
 
 def launch():  # pragma: no cover
