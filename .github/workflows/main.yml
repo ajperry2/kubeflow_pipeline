@@ -11,8 +11,21 @@ on:
     branches: [ main ]
 
   # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
+  workflow_dispatch: {}
+  workflow_call:
+    secrets:
+      deploykf_host:
+        description: 'The Host Where Deploykf is running'
+        required: true
+      deploykf_user:
+        description: 'The user launching the pipeline'
+        required: true
+      deploykf_password:
+        description: 'The users password launching the pipeline'
+        required: true
+      deploykf_namespace:
+        description: 'The namespace launching the pipeline'
+        required: true
 jobs:
   linter:
     strategy:
@@ -48,6 +61,13 @@ jobs:
         run: make install
       - name: Run tests
         run: make test
+        env:
+          deploykf_host: ${{ secrets.deploykf_host }}
+          deploykf_user: ${{ secrets.deploykf_user }}
+          deploykf_password: ${{ secrets.deploykf_password }}
+          deploykf_namespace: ${{ secrets.deploykf_namespace }}
+          deploykf_experiment: ${{ inputs.experiment }}
+          deploykf_run: ${{ inputs.run }}
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v3
         # with:
@@ -71,6 +91,13 @@ jobs:
         run: make install
       - name: Run tests
         run: make test
+        env:
+          deploykf_host: ${{ secrets.deploykf_host }}
+          deploykf_user: ${{ secrets.deploykf_user }}
+          deploykf_password: ${{ secrets.deploykf_password }}
+          deploykf_namespace: ${{ secrets.deploykf_namespace }}
+          deploykf_experiment: ${{ inputs.experiment }}
+          deploykf_run: ${{ inputs.run }}
 
   tests_win:
     needs: linter
@@ -91,3 +118,10 @@ jobs:
         run: pip install -e .[test]
       - name: run tests
         run: pytest -s -vvvv -l --tb=long tests
+        env:
+          deploykf_host: ${{ secrets.deploykf_host }}
+          deploykf_user: ${{ secrets.deploykf_user }}
+          deploykf_password: ${{ secrets.deploykf_password }}
+          deploykf_namespace: ${{ secrets.deploykf_namespace }}
+          deploykf_experiment: ${{ inputs.experiment }}
+          deploykf_run: ${{ inputs.run }}
