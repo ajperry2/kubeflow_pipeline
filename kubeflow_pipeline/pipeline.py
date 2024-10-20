@@ -37,7 +37,7 @@ def launch():  # pragma: no cover
     deploykf_username = os.environ.get("deploykf_user")
     deploykf_password = os.environ.get("deploykf_password")
     deploykf_experiment = os.environ.get("deploykf_experiment")
-    deploykf_run= os.environ.get("deploykf_run")
+    deploykf_run = os.environ.get("deploykf_run")
 
     # initialize a credentials instance and client
 
