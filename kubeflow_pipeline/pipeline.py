@@ -61,12 +61,12 @@ def launch():  # pragma: no cover
         )
     except ValueError:
         kfp_client.create_experiment(
-            name=experiment_name, namespace=deploykf_namespace
+            name=deploykf_experiment, namespace=deploykf_namespace
         )
     kfp_client.create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments={"recipient": "github"},
-        experiment_name=experiment_name,
+        experiment_name=deploykf_experiment,
         run_name=deploykf_run,
         namespace=deploykf_namespace,
     )
