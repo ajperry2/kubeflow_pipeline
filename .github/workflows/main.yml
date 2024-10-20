@@ -62,12 +62,10 @@ jobs:
       - name: Run tests
         run: make test
         env:
-          deploykf_host: ${{ secrets.deploykf_host }}
-          deploykf_user: ${{ secrets.deploykf_user }}
-          deploykf_password: ${{ secrets.deploykf_password }}
-          deploykf_namespace: ${{ secrets.deploykf_namespace }}
-          deploykf_experiment: ${{ inputs.experiment }}
-          deploykf_run: ${{ inputs.run }}
+          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
+          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
+          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
+          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v3
         # with:
@@ -92,12 +90,10 @@ jobs:
       - name: Run tests
         run: make test
         env:
-          deploykf_host: ${{ secrets.deploykf_host }}
-          deploykf_user: ${{ secrets.deploykf_user }}
-          deploykf_password: ${{ secrets.deploykf_password }}
-          deploykf_namespace: ${{ secrets.deploykf_namespace }}
-          deploykf_experiment: ${{ inputs.experiment }}
-          deploykf_run: ${{ inputs.run }}
+          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
+          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
+          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
+          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
 
   tests_win:
     needs: linter
@@ -119,9 +115,7 @@ jobs:
       - name: run tests
         run: pytest -s -vvvv -l --tb=long tests
         env:
-          deploykf_host: ${{ secrets.deploykf_host }}
-          deploykf_user: ${{ secrets.deploykf_user }}
-          deploykf_password: ${{ secrets.deploykf_password }}
-          deploykf_namespace: ${{ secrets.deploykf_namespace }}
-          deploykf_experiment: ${{ inputs.experiment }}
-          deploykf_run: ${{ inputs.run }}
+          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
+          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
+          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
+          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}

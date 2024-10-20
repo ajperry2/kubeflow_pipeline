@@ -12,6 +12,7 @@ on:
         description: 'Name of this run'
         required: true
         type: string
+        default: 'run'
       experiment:
         description: 'The name of this experiment the pipeline'
         required: true
@@ -49,9 +50,9 @@ jobs:
         run: kubeflow_pipeline
 
         env:
-          deploykf_host: ${{ secrets.deploykf_host }}
-          deploykf_user: ${{ secrets.deploykf_user }}
-          deploykf_password: ${{ secrets.deploykf_password }}
-          deploykf_namespace: ${{ secrets.deploykf_namespace }}
+          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
+          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
+          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
+          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
           deploykf_experiment: ${{ inputs.experiment }}
           deploykf_run: ${{ inputs.run }}
