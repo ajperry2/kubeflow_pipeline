@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Pipeline
+name: Launch Pipeline
 
 # Controls when the workflow will run
 on:
@@ -43,7 +43,7 @@ jobs:
       - name: Install project
         run: make install
       - name: Launch Pipeline
-        run: make launch
+        run: kubeflow_pipeline
 
         env:
           deploykf_host: ${{ secrets.deploykf_host }}

@@ -39,7 +39,6 @@ def launch():  # pragma: no cover
     # I am not too concerned about MITM attacks (so lack of ssl encryption is
     # fine for now). If others are connecting over the internet, be sure to
     # Setup https and set "skip_tls_verify" to False
-    print("https://" + deploykf_host + "/pipeline")
     kfp_client_manager = KFPClientManager(
         api_url="https://" + deploykf_host + "/pipeline",
         skip_tls_verify=False,
