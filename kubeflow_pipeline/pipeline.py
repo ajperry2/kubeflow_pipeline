@@ -1,6 +1,6 @@
 import os
 
-from kfp import dsl, components
+from kfp import dsl
 
 from .utils import KFPClientManager
 
