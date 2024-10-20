@@ -1,11 +1,10 @@
 import os
 
-from kfp import dsl
+from kfp import dsl, components
 
 from .utils import KFPClientManager
 
-
-@dsl.component
+@dsl.component(base_image="python:3.10")
 def say_hello(name: str) -> str:
     hello_text = f"Hello, {name}!"
     return hello_text
@@ -14,6 +13,7 @@ def say_hello(name: str) -> str:
 @dsl.pipeline
 def pipeline_func(recipient: str) -> str:
     hello_task = say_hello(name=recipient)
+    hello_task.set_display_name("STEP 0: Say Hello")
     hello_task.set_caching_options(False)
     return hello_task.output
 
