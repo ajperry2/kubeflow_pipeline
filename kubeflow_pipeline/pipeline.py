@@ -1,21 +1,22 @@
 import os
 
 from kfp import dsl
+from typing import Dict
 
 from .utils import KFPClientManager
-
-@dsl.component(base_image="python:3.10")
-def say_hello(name: str) -> str:
-    hello_text = f"Hello, {name}!"
-    return hello_text
+from kubeflow_pipeline import components
 
 
 @dsl.pipeline
-def pipeline_func(recipient: str) -> str:
-    hello_task = say_hello(name=recipient)
-    hello_task.set_display_name("STEP 0: Say Hello")
-    hello_task.set_caching_options(False)
-    return hello_task.output
+def pipeline_func(component_names: str) -> Dict[str, str]:
+    current_output: Dict[str, str] = dict()
+    for i, component_name in enumerate(component_names.split(",")):
+        task_obj = getattr(components, component_name)
+        task = task_obj(**current_output)
+        task.set_display_name(f"STEP {i}: {component_name}")
+        task.set_caching_options(False)
+        current_output = task.output
+    return current_output
 
 
 def launch():  # pragma: no cover
@@ -39,7 +40,7 @@ def launch():  # pragma: no cover
     deploykf_password = os.environ.get("deploykf_password")
     deploykf_experiment = os.environ.get("deploykf_experiment")
     deploykf_run = os.environ.get("deploykf_run")
-
+    component_names = os.environ.get("component_names")
     # initialize a credentials instance and client
 
     # Security Note: As all deployments are routed through my routers iptable,
@@ -66,8 +67,12 @@ def launch():  # pragma: no cover
         )
     kfp_client.create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
-        arguments={"recipient": "github"},
+        arguments={"component_names": component_names},
         experiment_name=deploykf_experiment,
         run_name=deploykf_run,
         namespace=deploykf_namespace,
     )
+
+
+if __name__ == "__main__":
+    launch()

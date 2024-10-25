@@ -34,7 +34,7 @@ on:
         required: true
         
 jobs:
-  linter:
+  run_pipeline:
     strategy:
       fail-fast: false
       matrix:
