@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Launch Pipeline
+name: Launch Hello World
 
 # Controls when the workflow will run
 on:
@@ -17,6 +17,10 @@ on:
         description: 'The name of this experiment the pipeline'
         required: true
         default: 'experiment'
+      message:
+        description: 'The message you want to send'
+        required: true
+        default: 'Hello World!'
 
   workflow_call:
     secrets:
@@ -56,3 +60,5 @@ jobs:
           deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
           deploykf_experiment: ${{ inputs.experiment }}
           deploykf_run: ${{ inputs.run }}
+          pipeline_name: 'hello_world'
+          message: ${{ inputs.message }}

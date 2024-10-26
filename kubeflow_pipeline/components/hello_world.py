@@ -6,10 +6,3 @@ from typing import Dict
 def say_hello(output: Dict[str, str]) -> Dict[str, str]:
     divmod_output = dict(quotient="a", remainder="a")
     return divmod_output
-
-
-@dsl.component(base_image="python:3.10")
-def test(output: Dict[str, str]) -> Dict[str, str]:
-    print(output)
-    divmod_output = dict(quotient="a", remainder="a")
-    return divmod_output

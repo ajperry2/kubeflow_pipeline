@@ -4,19 +4,7 @@ from kfp import dsl
 from typing import Dict
 
 from .utils import KFPClientManager
-from kubeflow_pipeline import components
 
-
-@dsl.pipeline
-def pipeline_func(component_names: str) -> Dict[str, str]:
-    current_output: Dict[str, str] = dict()
-    for i, component_name in enumerate(component_names.split(",")):
-        task_obj = getattr(components, component_name)
-        task = task_obj(**current_output)
-        task.set_display_name(f"STEP {i}: {component_name}")
-        task.set_caching_options(False)
-        current_output = task.output
-    return current_output
 
 
 def launch():  # pragma: no cover
@@ -28,19 +16,24 @@ def launch():  # pragma: no cover
 
     You can change this function to do whatever you want.
     """
-    assert "deploykf_host" in os.environ, "Host of deploykf instance required"
-    assert "deploykf_namespace" in os.environ, "Name of Experiment required"
-    assert "deploykf_user" in os.environ, "Deploykf username required"
-    assert "deploykf_password" in os.environ, "Deploykf password required"
-    assert "deploykf_experiment" in os.environ, "Deploykf experiment required"
-    assert "deploykf_run" in os.environ, "Deploykf run required"
-    deploykf_host = os.environ["deploykf_host"]
-    deploykf_namespace = os.environ["deploykf_namespace"]
-    deploykf_username = os.environ.get("deploykf_user")
-    deploykf_password = os.environ.get("deploykf_password")
-    deploykf_experiment = os.environ.get("deploykf_experiment")
-    deploykf_run = os.environ.get("deploykf_run")
-    component_names = os.environ.get("component_names")
+    assert "DEPLOYKF_HOST" in os.environ, "Host of deploykf instance required"
+    assert "DEPLOYKF_NAMESPACE" in os.environ, "Name of Experiment required"
+    assert "DEPLOYKF_USER" in os.environ, "Deploykf username required"
+    assert "DEPLOYKF_PASSWORD" in os.environ, "Deploykf password required"
+    assert "DEPLOYKF_EXPERIMENT" in os.environ, "Deploykf experiment required"
+    assert "DEPLOYKF_RUN" in os.environ, "Deploykf run required"
+    assert "PIPELINE_NAME" in os.environ, "Deploykf pipeline name required"
+
+    deploykf_host = os.environ["DEPLOYKF_HOST"]
+    deploykf_namespace = os.environ["DEPLOYKF_NAMESPACE"]
+    deploykf_username = os.environ.get("DEPLOYKF_USER")
+    deploykf_password = os.environ.get("DEPLOYKF_PASSWORD")
+    deploykf_experiment = os.environ.get("DEPLOYKF_EXPERIMENT")
+    deploykf_run = os.environ.get("DEPLOYKF_RUN")
+    pipeline_func = getattr(
+        kubeflow_pipeline.pipelines, 
+        os.environ.get("PIPELINE_NAME")
+    )
     # initialize a credentials instance and client
 
     # Security Note: As all deployments are routed through my routers iptable,

@@ -1,0 +1,59 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Launch Nuscene
+
+# Controls when the workflow will run
+on:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      run:
+        description: 'Name of this run'
+        required: true
+        type: string
+        default: 'run'
+      experiment:
+        description: 'The name of this experiment the pipeline'
+        required: true
+        default: 'experiment'
+
+  workflow_call:
+    secrets:
+      deploykf_host:
+        description: 'The Host Where Deploykf is running'
+        required: true
+      deploykf_user:
+        description: 'The user launching the pipeline'
+        required: true
+      deploykf_password:
+        description: 'The users password launching the pipeline'
+        required: true
+      deploykf_namespace:
+        description: 'The namespace launching the pipeline'
+        required: true
+        
+jobs:
+  run_pipeline:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [3.9]
+        os: [ubuntu-latest]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+      - name: Install project
+        run: make install
+      - name: Launch Pipeline
+        run: kubeflow_pipeline
+
+        env:
+          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
+          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
+          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
+          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
+          deploykf_experiment: ${{ inputs.experiment }}
+          deploykf_run: ${{ inputs.run }}
+          pipeline_name: 'nuscene'
