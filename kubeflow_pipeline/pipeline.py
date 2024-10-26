@@ -1,7 +1,8 @@
 import os
 
-from .utils import KFPClientManager
 import kubeflow_pipeline
+
+from .utils import KFPClientManager
 
 
 def launch():  # pragma: no cover

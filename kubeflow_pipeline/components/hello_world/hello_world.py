@@ -1,5 +1,6 @@
-from kfp import dsl
 from typing import Dict
+
+from kfp import dsl
 
 
 @dsl.component(base_image="python:3.10")

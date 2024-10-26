@@ -1,2 +1,2 @@
-from .pipelines import *
 from .components import *
+from .pipelines import *

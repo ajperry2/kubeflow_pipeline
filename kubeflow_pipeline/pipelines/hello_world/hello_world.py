@@ -1,6 +1,7 @@
 import os
-from kfp import dsl
 from typing import Dict
+
+from kfp import dsl
 
 from kubeflow_pipeline import components
 
