@@ -62,10 +62,10 @@ jobs:
       - name: Run tests
         run: make test
         env:
-          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
-          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
-          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
-          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
+          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
+          DEPLOYKF_USER: ${{ secrets.DEPLOYKF_USER }}
+          DEPLOYKF_PASSWORD: ${{ secrets.DEPLOYKF_PASSWORD }}
+          DEPLOYKF_NAMESPACE: ${{ secrets.DEPLOYKF_NAMESPACE }}
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v3
         # with:
@@ -90,10 +90,10 @@ jobs:
       - name: Run tests
         run: make test
         env:
-          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
-          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
-          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
-          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
+          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
+          DEPLOYKF_USER: ${{ secrets.DEPLOYKF_USER }}
+          DEPLOYKF_PASSWORD: ${{ secrets.DEPLOYKF_PASSWORD }}
+          DEPLOYKF_NAMESPACE: ${{ secrets.DEPLOYKF_NAMESPACE }}
 
   tests_win:
     needs: linter
@@ -115,7 +115,7 @@ jobs:
       - name: run tests
         run: pytest -s -vvvv -l --tb=long tests
         env:
-          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
-          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
-          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
-          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
+          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
+          DEPLOYKF_USER: ${{ secrets.DEPLOYKF_USER }}
+          DEPLOYKF_PASSWORD: ${{ secrets.DEPLOYKF_PASSWORD }}
+          DEPLOYKF_NAMESPACE: ${{ secrets.DEPLOYKF_NAMESPACE }}

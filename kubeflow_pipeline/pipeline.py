@@ -1,10 +1,7 @@
 import os
 
-from kfp import dsl
-from typing import Dict
-
 from .utils import KFPClientManager
-
+import kubeflow_pipeline
 
 
 def launch():  # pragma: no cover
@@ -31,8 +28,7 @@ def launch():  # pragma: no cover
     deploykf_experiment = os.environ.get("DEPLOYKF_EXPERIMENT")
     deploykf_run = os.environ.get("DEPLOYKF_RUN")
     pipeline_func = getattr(
-        kubeflow_pipeline.pipelines, 
-        os.environ.get("PIPELINE_NAME")
+        kubeflow_pipeline.pipelines, os.environ.get("PIPELINE_NAME")
     )
     # initialize a credentials instance and client
 
@@ -60,7 +56,7 @@ def launch():  # pragma: no cover
         )
     kfp_client.create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
-        arguments={"component_names": component_names},
+        arguments={},
         experiment_name=deploykf_experiment,
         run_name=deploykf_run,
         namespace=deploykf_namespace,

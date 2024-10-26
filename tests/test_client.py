@@ -5,6 +5,7 @@ from kubeflow_pipeline.utils import KFPClientManager
 
 load_dotenv()
 
+
 def test_client():
     deploykf_host = os.environ["DEPLOYKF_HOST"]
     deploykf_namespace = os.environ["DEPLOYKF_NAMESPACE"]

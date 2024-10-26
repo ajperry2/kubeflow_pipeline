@@ -54,11 +54,11 @@ jobs:
         run: kubeflow_pipeline
 
         env:
-          deploykf_host: ${{ secrets.DEPLOYKF_HOST }}
-          deploykf_user: ${{ secrets.DEPLOYKF_USER }}
-          deploykf_password: ${{ secrets.DEPLOYKF_PASSWORD }}
-          deploykf_namespace: ${{ secrets.DEPLOYKF_NAMESPACE }}
-          deploykf_experiment: ${{ inputs.experiment }}
-          deploykf_run: ${{ inputs.run }}
-          pipeline_name: 'hello_world'
-          message: ${{ inputs.message }}
+          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
+          DEPLOYKF_USER: ${{ secrets.DEPLOYKF_USER }}
+          DEPLOYKF_PASSWORD: ${{ secrets.DEPLOYKF_PASSWORD }}
+          DEPLOYKF_NAMESPACE: ${{ secrets.DEPLOYKF_NAMESPACE }}
+          DEPLOYKF_EXPERIMENT: ${{ inputs.experiment }}
+          DEPLOYKF_RUN: ${{ inputs.run }}
+          PIPELINE_NAME: 'hello_world'
+          MESSAGE: ${{ inputs.message }}
