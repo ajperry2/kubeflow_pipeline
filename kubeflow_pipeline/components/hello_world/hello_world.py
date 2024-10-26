@@ -1,5 +1,3 @@
-from typing import Dict
-
 from kfp import dsl
 
 

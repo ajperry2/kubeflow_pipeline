@@ -11,7 +11,7 @@ def download_nuscene(url: str) -> Dataset:
 
     import os
     from pathlib import Path
-    
+
     output_dataset = Dataset(name="nuscene", uri=dsl.get_uri(), metadata={})
     dataset_path = Path(output_dataset.path)
     dataset_path.mkdir(parents=True, exist_ok=True)
@@ -19,7 +19,6 @@ def download_nuscene(url: str) -> Dataset:
     tar = tarfile.open(dataset_path / "data.tgz")
     tar.extractall()
     tar.close()
-jh
     os.remove(dataset_path / "data.tgz")
-    
+
     return output_dataset
