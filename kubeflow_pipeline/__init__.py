@@ -1,2 +1,2 @@
-from .components import *
-from .pipelines import *
+import kubeflow_pipeline.pipelines
+import kubeflow_pipeline.components

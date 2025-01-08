@@ -1,1 +1,1 @@
-from .hello_world import say_hello
+from kubeflow_pipeline.components.hello_world.hello_world import say_hello

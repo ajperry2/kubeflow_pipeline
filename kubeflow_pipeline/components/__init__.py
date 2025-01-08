@@ -1,2 +1,2 @@
-from .hello_world import *
-from .nuscenes import *
+import kubeflow_pipeline.components.nuscenes
+import kubeflow_pipeline.components.hello_world

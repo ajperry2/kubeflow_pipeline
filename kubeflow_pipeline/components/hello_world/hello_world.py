@@ -1,7 +1,7 @@
 from kfp import dsl
 
 
-@dsl.component(base_image="python:3.10")
+@dsl.component
 def say_hello(message: str) -> str:
     print(message)
     return message
