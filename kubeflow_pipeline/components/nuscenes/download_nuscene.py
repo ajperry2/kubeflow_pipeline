@@ -152,17 +152,6 @@ def download_nuscene(
         save_file = download_file(download_url,save_file,md5)
         download_data[output_name] = [download_url,save_file,md5]
 
-    print("Extracting files...")
-    for output_name,(download_url,save_file,md5) in download_data.items():
-        if output_name.endswith(".tgz"):
-            extract_tgz_to_original_folder(save_file)
-        elif output_name.endswith(".tar"):
-            extract_tar_to_original_folder(save_file)
-        else:
-            print("unknow file type",output_name)
-
-    print("Done!")
-
 
 
     def extract_tgz_to_original_folder(tgz_file_path):
@@ -180,6 +169,17 @@ def download_nuscene(
         with tarfile.open(tar_file_path, 'r') as tar:
             tar.extractall(original_folder)
 
+
+    print("Extracting files...")
+    for output_name,(download_url,save_file,md5) in download_data.items():
+        if output_name.endswith(".tgz"):
+            extract_tgz_to_original_folder(save_file)
+        elif output_name.endswith(".tar"):
+            extract_tar_to_original_folder(save_file)
+        else:
+            print("unknow file type",output_name)
+
+    print("Done!")
 
 
 
