@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Launch Hello World
+name: Hello World
 
 # Controls when the workflow will run
 on:
@@ -8,18 +8,33 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
+      host:
+        description: 'The host (no scheme/port) of your kubeflow instance'
+        required: true
+      experiment:
+        description: 'The name of this experiment the pipeline'
+        required: true
+        default: 'test'
       run:
         description: 'Name of this run'
         required: true
         type: string
         default: 'run'
-      experiment:
-        description: 'The name of this experiment the pipeline'
+      username:
+        description: 'The username for the kubeflow pipeline account'
         required: true
-        default: 'experiment'
+      password:
+        description: 'The password for the kubeflow pipeline account'
+        required: true
+        type: string
       message:
         description: 'The message you want to send'
         required: true
+        default: 'Hello World!'
+      namespace:
+        description: 'The message you want to send'
+        required: true
+        type: string
         default: 'Hello World!'
 
   workflow_call:
@@ -42,22 +57,33 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
+        python-version: [3.11]
         os: [ubuntu-latest]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
+      - name: Install poetry
+        run: pip install poetry
       - name: Install project
-        run: make install
+        run: poetry install
       - name: Launch Pipeline
-        run: kubeflow_pipeline
+        run: >
+          poetry run kubeflow-pipeline 
+          --host $DEPLOYKF_HOST
+          --namespace $DEPLOYKF_NAMESPACE 
+          --experiment $DEPLOYKF_EXPERIMENT 
+          --username $DEPLOYKF_USER
+          --password $DEPLOYKF_PASSWORD 
+          --pipeline $PIPELINE_NAME 
+          --args '{"message": "'$MESSAGE'"}'
+
 
         env:
-          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
-          DEPLOYKF_USER: ${{ secrets.DEPLOYKF_USER }}
-          DEPLOYKF_PASSWORD: ${{ secrets.DEPLOYKF_PASSWORD }}
-          DEPLOYKF_NAMESPACE: ${{ secrets.DEPLOYKF_NAMESPACE }}
+          DEPLOYKF_HOST: ${{ inputs.host }}
+          DEPLOYKF_USER: ${{ inputs.username }}
+          DEPLOYKF_PASSWORD: ${{ inputs.password }}
+          DEPLOYKF_NAMESPACE: ${{ inputs.namespace }}
           DEPLOYKF_EXPERIMENT: ${{ inputs.experiment }}
           DEPLOYKF_RUN: ${{ inputs.run }}
           PIPELINE_NAME: 'hello_world'
