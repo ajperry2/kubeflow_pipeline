@@ -11,6 +11,19 @@ on:
       host:
         description: 'The host (no scheme/port) of your kubeflow instance'
         required: true
+      username:
+        description: 'The username for the kubeflow pipeline account'
+        required: true
+        type: string
+      password:
+        description: 'The password for the kubeflow pipeline account'
+        required: true
+        type: string
+      namespace:
+        description: 'The namespace to run the work in'
+        required: true
+        type: string
+        default: 'Hello World!'
       experiment:
         description: 'The name of this experiment the pipeline'
         required: true
@@ -20,13 +33,6 @@ on:
         required: true
         type: string
         default: 'run'
-      username:
-        description: 'The username for the kubeflow pipeline account'
-        required: true
-      password:
-        description: 'The password for the kubeflow pipeline account'
-        required: true
-        type: string
       nuscene_email:
         description: 'The email for your nuscene account'
         required: true
@@ -35,11 +41,6 @@ on:
         description: 'The password for your nuscene account'
         required: true
         type: string
-      namespace:
-        description: 'The namespace to run the work in'
-        required: true
-        type: string
-        default: 'Hello World!'
 
   workflow_call:
     secrets:

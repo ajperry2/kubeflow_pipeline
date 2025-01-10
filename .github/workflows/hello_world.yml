@@ -11,15 +11,6 @@ on:
       host:
         description: 'The host (no scheme/port) of your kubeflow instance'
         required: true
-      experiment:
-        description: 'The name of this experiment the pipeline'
-        required: true
-        default: 'test'
-      run:
-        description: 'Name of this run'
-        required: true
-        type: string
-        default: 'run'
       username:
         description: 'The username for the kubeflow pipeline account'
         required: true
@@ -27,14 +18,22 @@ on:
         description: 'The password for the kubeflow pipeline account'
         required: true
         type: string
-      message:
-        description: 'The message you want to send'
-        required: true
-        default: 'Hello World!'
       namespace:
-        description: 'The message you want to send'
+        description: 'The Kubeflow Namespace to run the work in'
         required: true
         type: string
+      experiment:
+        description: 'The name of this experiment the pipeline should run in '
+        required: true
+        default: 'test'
+      run:
+        description: 'Name of this run'
+        required: true
+        type: string
+        default: 'run'
+      message:
+        description: 'The message you want to print'
+        required: true
         default: 'Hello World!'
 
   workflow_call:
