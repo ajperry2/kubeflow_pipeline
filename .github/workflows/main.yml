@@ -35,7 +35,7 @@ jobs:
     - name: Install Poetry
       uses: snok/install-poetry@v1
     - name: Install dependencies
-      run: pip install -e .[test]
+      run: poetry install --with test
     - name: Run tests
       run: poetry run pytest # Example for running tests with pytest
       env:

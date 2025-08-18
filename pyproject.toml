@@ -1,24 +1,30 @@
-[tool.poetry]
+[project]
 name = "ajperry-pipeline"
 version = "0.1.1"
 description = ""
-authors = ["Alan Perry <alan.jacob.perry@gmail.com>"]
+authors = [
+    { name = "Alan Perry", email = "alan.jacob.perry@gmail.com" },
+]
 readme = "README.md"
+dependencies = [
+    'python>=3.12',
+    'typer>=0.15.1',
+    'ruff>=0.8.6',
+    'kfp>=2.0.0,<3',
+]
 
-[tool.poetry.scripts]
+[project.scripts]
 ajperry-pipeline = "ajperry_pipeline.main:app"
 
-[tool.poetry.dependencies]
-python = "^3.12"
-typer = "^0.15.1"
-black = "^24.10.0"
-ruff = "^0.8.6"
-kfp = ">=2.0.0,<3"
+
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 
-[project.optional-dependencies]
-test = ["pytest"]
+[poetry.group.test.dependencies]
+pytest = '8.4.1'
+
+[poetry.group.lint.dependencies]
+ruff = '0.8.6'
