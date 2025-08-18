@@ -10,22 +10,6 @@ on:
   pull_request:
     branches: [ main ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch: {}
-  workflow_call:
-    secrets:
-      deploykf_host:
-        description: 'The Host Where Deploykf is running'
-        required: true
-      deploykf_user:
-        description: 'The user launching the pipeline'
-        required: true
-      deploykf_password:
-        description: 'The users password launching the pipeline'
-        required: true
-      deploykf_namespace:
-        description: 'The namespace launching the pipeline'
-        required: true
 jobs:
   linter:
     strategy:
@@ -44,43 +28,8 @@ jobs:
       - name: Run linter
         run: make lint
 
-  tests_linux:
-    needs: linter
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-        os: [ubuntu-latest]
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install project
-        run: make install
-      - name: Run tests
-        run: make test
-        env:
-          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
-          DEPLOYKF_USER: ${{ secrets.DEPLOYKF_USER }}
-          DEPLOYKF_PASSWORD: ${{ secrets.DEPLOYKF_PASSWORD }}
-          DEPLOYKF_NAMESPACE: ${{ secrets.DEPLOYKF_NAMESPACE }}
-      - name: "Upload coverage to Codecov"
-        uses: codecov/codecov-action@v3
-        # with:
-        #   fail_ci_if_error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-  tests_mac:
-    needs: linter
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.9]
-        os: [macos-latest]
-    runs-on: ${{ matrix.os }}
   build-and-test:
+    environment: pipeline_env
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

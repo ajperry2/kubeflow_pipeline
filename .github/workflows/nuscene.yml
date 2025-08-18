@@ -44,16 +44,16 @@ on:
 
   workflow_call:
     secrets:
-      deploykf_host:
-        description: 'The Host Where Deploykf is running'
+      KUBEFLOW_HOST:
+        description: 'The Host Where KUBEFLOW is running'
         required: true
-      deploykf_user:
+      KUBEFLOW_user:
         description: 'The user launching the pipeline'
         required: true
-      deploykf_password:
+      KUBEFLOW_password:
         description: 'The users password launching the pipeline'
         required: true
-      deploykf_namespace:
+      KUBEFLOW_namespace:
         description: 'The namespace launching the pipeline'
         required: true
         
@@ -65,6 +65,7 @@ jobs:
         python-version: [3.11]
         os: [ubuntu-latest]
     runs-on: ubuntu-latest
+    environment: pipeline_env
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-python@v4
@@ -75,22 +76,15 @@ jobs:
       - name: Launch Pipeline
         run: >
           poetry run kubeflow-pipeline 
-          --host $DEPLOYKF_HOST
-          --namespace $DEPLOYKF_NAMESPACE 
-          --experiment $DEPLOYKF_EXPERIMENT 
-          --username $DEPLOYKF_USER
-          --password $DEPLOYKF_PASSWORD 
-          --pipeline $PIPELINE_NAME 
+          --host ${{ secrets.KUBEFLOW_HOST }}
+          --namespace ${{ secrets.KUBEFLOW_NAMESPACE }}
+          --experiment $KUBEFLOW_EXPERIMENT 
+          --username ${{ secrets.KUBEFLOW_USER }}
+          --password ${{ secrets.KUBEFLOW_PASSWORD }}
+          --pipeline download_nuscene 
           --args '{"nuscene_email": "'$NUSCENE_EMAIL'","nuscene_password": "'$NUSCENE_PASSWORD'","region": "us"}'
-
-
         env:
-          DEPLOYKF_HOST: ${{ secrets.DEPLOYKF_HOST }}
-          DEPLOYKF_USER: ${{ inputs.username }}
-          DEPLOYKF_PASSWORD: ${{ inputs.password }}
-          DEPLOYKF_NAMESPACE: ${{ inputs.namespace }}
-          DEPLOYKF_EXPERIMENT: ${{ inputs.experiment }}
-          DEPLOYKF_RUN: ${{ inputs.run }}
-          PIPELINE_NAME: 'hello_world'
+          KUBEFLOW_EXPERIMENT: ${{ inputs.experiment }}
+          KUBEFLOW_RUN: ${{ inputs.run }}
           NUSCENE_EMAIL: ${{ inputs.nuscene_email }}
           NUSCENE_PASSWORD: ${{ inputs.nuscene_password }}
