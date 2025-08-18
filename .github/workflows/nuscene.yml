@@ -8,22 +8,6 @@ on:
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
     inputs:
-      host:
-        description: 'The host (no scheme/port) of your kubeflow instance'
-        required: true
-      username:
-        description: 'The username for the kubeflow pipeline account'
-        required: true
-        type: string
-      password:
-        description: 'The password for the kubeflow pipeline account'
-        required: true
-        type: string
-      namespace:
-        description: 'The namespace to run the work in'
-        required: true
-        type: string
-        default: 'Hello World!'
       experiment:
         description: 'The name of this experiment the pipeline'
         required: true
