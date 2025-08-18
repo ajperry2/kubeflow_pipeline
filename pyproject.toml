@@ -5,13 +5,24 @@ description = ""
 authors = [
     { name = "Alan Perry", email = "alan.jacob.perry@gmail.com" },
 ]
+requires-python = ">=3.10"
 readme = "README.md"
 dependencies = [
-    'python>=3.12',
-    'typer>=0.15.1',
-    'ruff>=0.8.6',
+    'typer',
     'kfp>=2.0.0,<3',
 ]
+
+
+[project.optional-dependencies]
+# testing dependency group
+test = [
+    'pytest'
+]
+# linting dependency group
+lint = [
+    'ruff'
+]
+
 
 [project.scripts]
 ajperry-pipeline = "ajperry_pipeline.main:app"
@@ -21,10 +32,3 @@ ajperry-pipeline = "ajperry_pipeline.main:app"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
-
-
-[poetry.group.test.dependencies]
-pytest = '8.4.1'
-
-[poetry.group.lint.dependencies]
-ruff = '0.8.6'
