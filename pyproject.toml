@@ -32,3 +32,7 @@ ajperry-pipeline = "ajperry_pipeline.main:app"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+
+[virtualenvs]
+in-project = true
