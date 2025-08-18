@@ -1,1 +1,0 @@
-from kubeflow_pipeline.components.hello_world.hello_world import say_hello

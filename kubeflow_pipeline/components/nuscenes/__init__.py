@@ -1,1 +1,0 @@
-from  kubeflow_pipeline.components.nuscenes.download_nuscene import download_nuscene

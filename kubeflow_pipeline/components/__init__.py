@@ -1,2 +1,2 @@
-import kubeflow_pipeline.components.nuscenes
-import kubeflow_pipeline.components.hello_world
+from .nuscenes import download_nuscene
+from .hello import say_hello

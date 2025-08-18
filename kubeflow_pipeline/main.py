@@ -6,7 +6,7 @@ from typing import Optional
 from typing_extensions import Annotated
 import json
 
-from .utils import KFPClientManager
+from .utils import get_istio_auth_session
 import kubeflow_pipeline
 
 app = typer.Typer()
@@ -31,26 +31,26 @@ def launch_run(
         kubeflow_pipeline.pipelines, pipeline
     )
     
-
-    kfp_client_manager = KFPClientManager(
-        api_url="https://" + host + "/pipeline",
-        skip_tls_verify=False,
-        dex_username=username,
-        dex_password=password,
-        dex_auth_type="local",
+    auth_session = get_istio_auth_session(
+        url=f"https://{host}",
+        username=username,
+        password=password
     )
-    kfp_client = kfp_client_manager.create_kfp_client()
+    client = kfp.Client(
+        host=f"https://{host}/pipeline",
+        cookies=auth_session["session_cookie"]
+    )
     # Get definition of experiment/run
     # Make experiment if it does not exist
     try:
-        kfp_client.get_experiment(
+        client.get_experiment(
             experiment_name=experiment, namespace=namespace
         )
     except ValueError:
-        kfp_client.create_experiment(
+        client.create_experiment(
             name=experiment, namespace=namespace
         )
-    kfp_client.create_run_from_pipeline_func( 
+    client.create_run_from_pipeline_func( 
         pipeline_func=pipeline_func,
         arguments=json.loads(args),
         experiment_name=experiment,
