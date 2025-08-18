@@ -19,3 +19,6 @@ kfp = ">=2.0.0,<3"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
+
+[project.optional-dependencies]
+test = ["pytest"]
