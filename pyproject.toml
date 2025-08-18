@@ -6,7 +6,7 @@ authors = ["Alan Perry <alan.jacob.perry@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.scripts]
-kubeflow-pipeline = "ajperry_pipeline.main:app"
+ajperry-pipeline = "ajperry_pipeline.main:app"
 
 [tool.poetry.dependencies]
 python = "^3.12"

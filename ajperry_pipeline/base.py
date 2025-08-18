@@ -1,1 +1,1 @@
-NAME = "kubeflow_pipeline"
+NAME = "ajperry_pipeline"
