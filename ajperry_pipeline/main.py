@@ -1,10 +1,10 @@
-import os
 import typer
 import random
 import string
 from typing import Optional
 from typing_extensions import Annotated
 import json
+import kfp
 
 from .utils import get_istio_auth_session
 import kubeflow_pipeline

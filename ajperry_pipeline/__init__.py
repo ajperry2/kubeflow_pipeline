@@ -1,2 +1,2 @@
-import kubeflow_pipeline.pipelines
-import kubeflow_pipeline.components
+from ajperry_pipeline import pipelines as pipelines
+from ajperry_pipeline import components as components

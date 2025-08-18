@@ -19,16 +19,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: astral-sh/ruff-action@v3
         with:
-          python-version: 3.9
-
-      - name: Install dependencies
-        run: |
-          pip install flake8  # Or pylint, ruff, etc.
-
-      - name: Run linter
-        run: flake8 .
+          src: "./ajperry_pipeline"
 
   build-and-test:
     environment: pipeline_env

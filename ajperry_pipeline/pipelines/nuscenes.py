@@ -1,7 +1,6 @@
-import os
 from kfp import dsl
 
-from kubeflow_pipeline import components
+from ajperry_pipeline import components
 
 
 @dsl.pipeline
@@ -10,7 +9,7 @@ def download_nuscene(
     nuscene_password: str,
     region:str
 ) -> dsl.Dataset:
-    download_task = components.nuscenes.download_nuscene(
+    download_task = components.download_nuscene_dataset(
         nuscene_email=nuscene_email,
         nuscene_password=nuscene_password,
         region=region,

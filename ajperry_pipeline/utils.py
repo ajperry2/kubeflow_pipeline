@@ -1,5 +1,6 @@
-import kfp
 import requests
+import re
+from urllib.parse import urlsplit
 
 
 def get_istio_auth_session(url: str, username: str, password: str) -> dict:

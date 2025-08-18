@@ -1,4 +1,3 @@
-from typing import Dict
 
 from kfp import dsl
 from kfp.dsl import Dataset
@@ -9,7 +8,7 @@ from kfp.dsl import Dataset
     packages_to_install=[
         'requests==2.31.0', 
         'tqdm==4.65.0'])
-def download_nuscene(
+def download_nuscene_dataset(
     nuscene_email: str,
     nuscene_password: str,
     region:str
