@@ -45,10 +45,15 @@ jobs:
 
     - name: Install dependencies
       run: poetry install --no-root
-    - name: Build and publish
+    - name: Install Twine
+      run: pip install twine
+
+    - name: Build Package
+      run: poetry build
+
+    - name: Publish Package
       env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-      run: |
-        poetry build
-        twine upload dist/*
+        POETRY_PYPI_TOKEN_PYPI: ${{ secrets.PYPI_API_TOKEN }} # Or PYPI_USERNAME/PYPI_PASSWORD
+      run: poetry publish
+
+
