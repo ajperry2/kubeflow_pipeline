@@ -7,7 +7,7 @@ import json
 import kfp
 
 from .utils import get_istio_auth_session
-import kubeflow_pipeline
+import ajperry_pipeline
 
 app = typer.Typer()
 
@@ -28,7 +28,7 @@ def launch_run(
         run = ''.join(random.choice(alphabet) for i in range(20))
 
     pipeline_func = getattr(
-        kubeflow_pipeline.pipelines, pipeline
+        ajperry_pipeline.pipelines, pipeline
     )
     
     auth_session = get_istio_auth_session(
