@@ -3,29 +3,30 @@ from math import sqrt, inf
 
 
 class EncoderDecoderAttention(torch.nn.Module):
-    def __init__(self, token_dim: int, embedding_size: int, num_heads: int):
+    def __init__(self, token_dim: int, embedding_size: int, num_heads: int, device: str = "cpu"):
         super().__init__()
         self.num_heads = num_heads
         self.w_queries = [
-            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size))
+            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size)).to(device)
             for i in range(self.num_heads)
         ]
         self.w_keys = [
-            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size))
+            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size)).to(device)
             for i in range(self.num_heads)
         ]
         self.w_values = [
-            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size))
+            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size)).to(device)
             for i in range(self.num_heads)
         ]
-        self.w_agg = torch.nn.Parameter(torch.rand(embedding_size*self.num_heads, token_dim))
+        self.w_agg = torch.nn.Parameter(torch.rand(embedding_size*self.num_heads, token_dim)).to(device)
         self.embedding_size = embedding_size
         self.token_dim = token_dim
+        self.device = device
             
     def forward(self, x, encoder_context, attention_mask, current_index):
         attention_heads = []
         for i in range(self.num_heads):
-            mask = torch.zeros(x.shape[0], x.shape[1], x.shape[1], dtype=torch.float)
+            mask = torch.zeros(x.shape[0], x.shape[1], x.shape[1], dtype=torch.float).to(self.device)
             for j in range(x.shape[0]):
                 min_col = min(current_index+1, x.shape[1]-1)
                 mask[j, min_col:,:] = -inf

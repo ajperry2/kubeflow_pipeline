@@ -2,12 +2,13 @@ import torch
 
 
 class FeedForwardNeuralNetwork(torch.nn.Module):
-    def __init__(self, num_layers: int, token_dim: int, dropout_p = 0.0):
+    def __init__(self, num_layers: int, token_dim: int, dropout_p = 0.0, device: str = "cpu"):
         super().__init__()
-        self.linears = [torch.nn.Linear(token_dim,token_dim) for i in range(num_layers)]
+        self.linears = [torch.nn.Linear(token_dim,token_dim).to(device) for i in range(num_layers)]
         self.dropout_p = dropout_p
         self.dropout = torch.nn.Dropout(dropout_p)
         self.leaky_relu = torch.nn.LeakyReLU(negative_slope=0.01)
+        self.device = device
         
     def forward(self, x):
         for layer in self.linears:

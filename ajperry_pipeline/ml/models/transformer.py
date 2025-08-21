@@ -31,6 +31,7 @@ class Transformer(torch.nn.Module):
         # dynamically get the size of our embedding models output
         t_input = "hello how are you"
         tokens = self.tokenizer(t_input, return_tensors="pt")
+        tokens = {k:v.to(device) for k,v in tokens.items()}
         outputs = self.embedding_model(**tokens)
         token_embeddings = outputs.last_hidden_state
         self.token_dim = token_embeddings.shape[-1]
@@ -38,18 +39,19 @@ class Transformer(torch.nn.Module):
         
         
         self.encoders = [
-            Encoder(self.token_dim, self.embedding_size, num_heads, num_nn_layers).to(device) 
+            Encoder(self.token_dim, self.embedding_size, num_heads, num_nn_layers,device = device).to(device) 
             for i in range(num_encoders)
         ]
         self.decoders = [
-            Decoder(self.token_dim, self.embedding_size, num_heads, num_nn_layers).to(device) 
+            Decoder(self.token_dim, self.embedding_size, num_heads, num_nn_layers,device = device).to(device) 
             for i in range(num_encoders)
         ]
-        self.linear = torch.nn.Parameter(torch.rand(self.token_dim, self.tokenizer.vocab_size))
+        self.linear = torch.nn.Parameter(torch.rand(self.token_dim, self.tokenizer.vocab_size)).to(device)
         self.device = device
 
     def forward(self, inputs: list[str]):
         tokens = self.tokenizer(inputs, return_tensors="pt", padding='max_length', max_length=self.max_length)
+        tokens = {k:v.to(self.device) for k,v in tokens.items()}
         outputs = self.embedding_model(**tokens)
         attention_mask = tokens['attention_mask']
         token_embeddings = outputs.last_hidden_state
@@ -75,6 +77,7 @@ class Transformer(torch.nn.Module):
                 clean_up_tokenization_spaces=True
             ) for j in range(len(inputs))]
             output_tokens = self.tokenizer(decoder_inputs_j, return_tensors="pt", truncation=True, padding='max_length', max_length=self.max_length)
+            output_tokens = {k:v.to(self.device) for k,v in output_tokens.items()}
             outputs_tokens = self.embedding_model(**output_tokens)
             output_embeddings = outputs_tokens.last_hidden_state
             attention_mask = output_tokens['attention_mask']

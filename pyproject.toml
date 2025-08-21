@@ -1,6 +1,6 @@
 [project]
 name = "ajperry-pipeline"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = [
     { name = "Alan Perry", email = "alan.jacob.perry@gmail.com" },
@@ -10,6 +10,8 @@ readme = "README.md"
 dependencies = [
     'typer',
     'kfp>=2.0.0,<3',
+    'torch',
+    'transformers'
 ]
 
 

@@ -3,24 +3,25 @@ from math import sqrt
 
 
 class SelfAttention(torch.nn.Module):
-    def __init__(self, token_dim: int, embedding_size: int, num_heads: int):
+    def __init__(self, token_dim: int, embedding_size: int, num_heads: int, device: str = "cpu"):
         super().__init__()
         self.num_heads = num_heads
         self.w_queries = [
-            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size))
+            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size)).to(device)
             for i in range(self.num_heads)
         ]
         self.w_keys = [
-            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size))
+            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size)).to(device)
             for i in range(self.num_heads)
         ]
         self.w_values = [
-            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size))
+            torch.nn.Parameter(torch.rand(1,token_dim, embedding_size)).to(device)
             for i in range(self.num_heads)
         ]
-        self.w_agg = torch.nn.Parameter(torch.rand(embedding_size*self.num_heads, token_dim))
+        self.w_agg = torch.nn.Parameter(torch.rand(embedding_size*self.num_heads, token_dim)).to(device)
         self.embedding_size = embedding_size
         self.token_dim = token_dim
+        self.device = device
             
     def forward(self, x, attention_mask):
         attention_heads = []
