@@ -4,22 +4,19 @@
 ## Install Package
 
 
-`poetry install`
+Note: Mainly installed in kubeflow instance.
 
-## Run Pipeline
 
-**Run with local command**
-```
-poetry run kubeflow-pipeline \
-    --host deploykf.example.com \
-    --namespace my-namespace \
-    --experiment test \
-    --username 'pipeline_username' \
-    --password 'pipeline_password' \ 
-    --pipeline hello_world \ 
-    --args '{"message": "Goodbye World!"}'
-```
+`pip install ajperry_pipeline`
 
-**Pipeline that will run in kubeflow**
 
-![Pipeline GUE](./images/test_pipeline_run.png "Pipeline that will run in kubeflow")
+# Usage
+
+
+
+1. Open the notebooks at `./notebooks` in kubeflow notebook
+2. Launch pipeline components as desired
+
+
+
+![Pipeline GUI](./images/test_pipeline_run.png "Pipeline that will run in kubeflow")
