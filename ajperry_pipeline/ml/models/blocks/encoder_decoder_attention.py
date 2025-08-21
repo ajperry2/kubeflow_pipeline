@@ -24,7 +24,6 @@ class EncoderDecoderAttention(torch.nn.Module):
             
     def forward(self, x, encoder_context, attention_mask, current_index):
         attention_heads = []
-        zero_i = (attention_mask==0).nonzero()
         for i in range(self.num_heads):
             mask = torch.zeros(x.shape[0], x.shape[1], x.shape[1], dtype=torch.float)
             for j in range(x.shape[0]):

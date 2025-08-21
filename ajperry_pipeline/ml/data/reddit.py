@@ -24,13 +24,4 @@ class RedditDataset(Dataset):
     def __getitem__(self, idx):
         with self.paths[idx].open() as f:
             data = json.load(f)
-
-        {
-            id: data["id"],
-            "title": title,
-            "url": url,
-            "text": text,
-            "top_comment": comment_text,
-            "comment_score": comment_score
-        } 
         return data["title"], data["top_comment"]

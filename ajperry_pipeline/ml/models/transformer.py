@@ -3,7 +3,6 @@ from transformers import AutoTokenizer
 from transformers import AutoModel
 from huggingface_hub import login
 import os
-import numpy as np
 
 from ajperry_pipeline.ml.utils.positional_embedding import positional_embedding
 from ajperry_pipeline.ml.models.blocks.encoder import Encoder
@@ -55,13 +54,14 @@ class Transformer(torch.nn.Module):
         attention_mask = tokens['attention_mask']
         token_embeddings = outputs.last_hidden_state
         positional_embeddings = positional_embedding(*token_embeddings.shape[-2:])
+        positional_embeddings = positional_embeddings.to(self.device)
+        token_embeddings = token_embeddings.to(self.device)
         token_embeddings += positional_embeddings
 
         
         for encoder in self.encoders:
             token_embeddings = encoder(token_embeddings, attention_mask)
 
-        max_output_length = 20
         i = 0 
         decoder_inputs = [[self.tokenizer.pad_token_id] for j in range(len(inputs))]
         outputs = [[None for _ in range(self.max_length)] for j in range(len(inputs))]
