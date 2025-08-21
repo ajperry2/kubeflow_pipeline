@@ -3,6 +3,16 @@ from math import sqrt
 
 
 class SelfAttention(torch.nn.Module):
+    """
+    The Self Attention block of a transformer architecture.
+
+    Attributes:
+        w_queries (Parameter): Query weights
+        w_keys (Parameter): Key weights
+        w_values (Parameter): Value weights
+        w_agg (Parameter): Aggregation weights
+    """
+    
     def __init__(self, token_dim: int, embedding_size: int, num_heads: int, device: str = "cpu"):
         super().__init__()
         self.num_heads = num_heads

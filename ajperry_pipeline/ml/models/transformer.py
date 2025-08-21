@@ -10,6 +10,16 @@ from ajperry_pipeline.ml.models.blocks.decoder import Decoder
 
 
 class Transformer(torch.nn.Module):
+    """
+    A sequence to sequence model which uses attention for context.
+
+    Attributes:
+        tokenizer (Tokenizer): The tokenizer used for embedding model.
+        embedding_model (AutoModel): The embedding model
+        max_length (int): The number of tokens taken as input.
+        encoders (list[Encoder]): The models encoders.
+        decoders (list[Decoder]): The models decoders.
+    """
     def __init__(
         self,
         embedding_model: str="bert-base-uncased", 

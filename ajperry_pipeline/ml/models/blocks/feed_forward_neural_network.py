@@ -2,6 +2,15 @@ import torch
 
 
 class FeedForwardNeuralNetwork(torch.nn.Module):
+    """
+    The Neural Network block of a transformer architecture.
+    
+    It uses dropout and leaky relu
+
+    Attributes:
+        linears (list[Linear]): Self attention
+        feed_forward (FeedForwardNeuralNetwork): Neural Network
+    """
     def __init__(self, num_layers: int, token_dim: int, dropout_p = 0.0, device: str = "cpu"):
         super().__init__()
         self.linears = [torch.nn.Linear(token_dim,token_dim).to(device) for i in range(num_layers)]
