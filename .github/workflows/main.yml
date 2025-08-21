@@ -18,7 +18,7 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - uses: astral-sh/ruff-action@v3
         with:
           src: "./ajperry_pipeline"
@@ -27,7 +27,7 @@ jobs:
     environment: pipeline_env
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
