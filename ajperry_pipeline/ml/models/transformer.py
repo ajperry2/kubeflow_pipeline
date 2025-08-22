@@ -60,7 +60,7 @@ class Transformer(torch.nn.Module):
         self.device = device
 
     def forward(self, inputs: list[str]):
-        tokens = self.tokenizer(inputs, return_tensors="pt", padding='max_length', max_length=self.max_length)
+        tokens = self.tokenizer(inputs, return_tensors="pt", padding='max_length', truncation=True, max_length=self.max_length)
         tokens = {k:v.to(self.device) for k,v in tokens.items()}
         outputs = self.embedding_model(**tokens)
         attention_mask = tokens['attention_mask']
