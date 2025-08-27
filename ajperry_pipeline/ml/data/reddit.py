@@ -1,6 +1,4 @@
 from torch.utils.data import Dataset
-from pathlib import Path
-import json
 import pandas as pd
 
 from ajperry_pipeline.ml.utils.data_splitting import string_to_float_hash
@@ -28,7 +26,7 @@ class RedditDataset(Dataset):
 
         self.all_data = pd.read_csv(data_path)
         self.all_data["selected"] = self.all_data['id'].apply(selected)
-        self.all_data = self.all_data[self.all_data['selected'] == True]
+        self.all_data = self.all_data[self.all_data['selected']]
         
     def __len__(self):
         return len(self.all_data)
