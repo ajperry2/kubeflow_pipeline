@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from pathlib import Path
 import json
+import pandas as pd
 
 from ajperry_pipeline.ml.utils.data_splitting import string_to_float_hash
 
@@ -17,21 +18,21 @@ class RedditDataset(Dataset):
     """
     
     def __init__(self, data_path: str, is_train: bool, train_split_perc: float = 0.8):
-        self.data_path = Path(data_path)
-        self.paths = []
-        for p in  self.data_path.glob("*"):
-            with p.open() as f:
-                data = json.load(f)
-                hash_val = string_to_float_hash(data["id"])
-                if is_train and hash_val <= train_split_perc:
-                    self.paths.append(p)
-                elif not is_train and hash_val > train_split_perc:
-                    self.paths.append(p)
+        
+        def selected(data_id):
+            hash_val = string_to_float_hash(data_id)
+            return (
+                is_train and hash_val <= train_split_perc
+                or not is_train and hash_val > train_split_perc
+            )
+
+        self.all_data = pd.read_csv(data_path)
+        self.all_data["selected"] = self.all_data['id'].apply(selected)
+        self.all_data = self.all_data[self.all_data['selected'] == True]
         
     def __len__(self):
-        return len(self.paths)
+        return len(self.all_data)
 
     def __getitem__(self, idx):
-        with self.paths[idx].open() as f:
-            data = json.load(f)
-        return data["title"], data["top_comment"]
+        row = self.all_data.iloc[idx]
+        return row["title"], row["top_comment"]
