@@ -61,9 +61,12 @@ class Transformer(torch.nn.Module):
 
     def forward(self, inputs: list[str]):
         tokens = self.tokenizer(inputs, return_tensors="pt", padding='max_length', truncation=True, max_length=self.max_length)
-        tokens = {k:v.to(self.device) for k,v in tokens.items()}
-        outputs = self.embedding_model(**tokens)
-        attention_mask = tokens['attention_mask']
+        device_tokens = {k:v.to(self.device) for k,v in tokens.items()}
+        outputs = self.embedding_model(
+            input_ids=device_tokens['input_ids'],
+            attention_mask=device_tokens['attention_mask']               
+        )
+        attention_mask = device_tokens['attention_mask']
         token_embeddings = outputs.last_hidden_state
         positional_embeddings = positional_embedding(*token_embeddings.shape[-2:])
         positional_embeddings = positional_embeddings.to(self.device)
