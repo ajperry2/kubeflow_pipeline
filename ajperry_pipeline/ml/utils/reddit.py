@@ -115,7 +115,7 @@ def run_validation(
     bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=4)
     if verbose:
         print_msg(f"BLEU Score: {bleu_score}")
-    mlflow.log_metric("test_bleu", bleu_score, global_step=global_step)
+    mlflow.log_metric("test_bleu", bleu_score, step=global_step)
     return bleu_score
 
 
