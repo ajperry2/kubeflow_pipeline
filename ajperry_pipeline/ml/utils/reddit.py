@@ -117,6 +117,19 @@ def run_validation(
     mlflow.log_metric("test_bleu", bleu_score, step=global_step)
     return bleu_score
 
+def get_best_model(config):
+    runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
+    model_path = ""
+    best_performance = 0
+    if len(runs) > 0:
+        for run in runs:
+            if "performance" in run.tags and best_performance > float(
+                run.tags["performance"]
+            ):
+                best_performance = run.tags["performance"]
+                model_path = run.tags["model_path"]
+    return best_performance, model_path
+
 def test(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data_file = Path(config["data_folder"]) / "reddit.csv"
@@ -129,16 +142,7 @@ def test(config):
         is_date=True,
         date_split=(datetime.now() - one_day_ago_delta)
     )
-    runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
-    model_path = ""
-    best_performance = 0
-    if len(runs) > 0:
-        for run in runs:
-            if "performance" in run.tags and best_performance > float(
-                run.tags["performance"]
-            ):
-                best_performance = run.tags["performance"]
-                model_path = run.tags["model_path"]
+    best_performance, model_path = get_best_model(config)
     if model_path != "":
         # make model
         model = make_model(
@@ -225,14 +229,7 @@ def train(config):
 
         global_step = 0
         # best_uri = None
-        best_performance = 0
-        runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
-        if len(runs) > 0:
-            for run in runs:
-                if "performance" in run.tags and best_performance > float(
-                    run.tags["performance"]
-                ):
-                    best_performance = run.tags["performance"]
+        best_performance, model_path = get_best_model(config)
 
         loss_fn = nn.CrossEntropyLoss(
             ignore_index=train_dataset.input_tokenizer.token_to_id("[PAD]"),
