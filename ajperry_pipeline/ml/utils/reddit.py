@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from ajperry_pipeline.ml.models.transformer import build_transformer
 from ajperry_pipeline.ml.data.reddit import RedditDataset
 from tqdm import tqdm
-
+import torchtext.data.metrics as metrics
 
 def get_weights_file_path(config, epoch):
     model_folder = config["model_folder"]
@@ -58,7 +58,7 @@ def greedy_decode(
             break
     return decoder_input.squeeze(0)
 
-
+            
 def run_validation(
     model,
     validation_ds,
@@ -67,9 +67,10 @@ def run_validation(
     max_len,
     device,
     print_msg,
-    global_state,
+    global_step,
     writer,
     num_examples=2,
+    verbose=False
 ):
     model.eval()
     count = 0
@@ -92,19 +93,33 @@ def run_validation(
                 max_len,
                 device,
             )
-            source_text = batch["input_text"]
-            target_text = batch["output_text"]
+            source_text = batch["input_text"][0]
+            target_text = batch["output_text"][0]
             model_out_text = tokenizer_tgt.decode(model_output.detach().cpu().numpy())
             source_texts.append(source_text)
             expected_texts.append(target_text)
             predicted_texts.append(model_out_text)
-            print_msg("-" * console_width)
-            print_msg(f"Source:\t{source_text}")
-            print_msg(f"Target:\t{target_text}")
-            print_msg(f"Predicted:\t{model_out_text}")
+            if verbose:
+                print_msg("-" * console_width)
+                print_msg(f"Source:\t{source_text}")
+                print_msg(f"Target:\t{target_text}")
+                print_msg(f"Predicted:\t{model_out_text}")
             if count == num_examples:
                 break
-
+    candidate_corpus = [
+        list(model_out_text.split())
+        for model_out_text in predicted_texts
+    ]
+    # Example reference translations (each candidate can have multiple references, also of varying lengths)
+    references_corpus = [
+        [list(target_text.split())]
+        for target_text in expected_texts
+    ]
+    bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=4)
+    if verbose:
+        print_msg(f"BLEU Score: {bleu_score}")
+    writer.add_scalar("test_bleu", bleu_score, global_step=global_step)
+    writer.flush()
 
 def train(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -153,7 +168,7 @@ def train(config):
 
     for epoch in range(initial_epoch, config["num_epochs"]):
         model.train()
-        batch_iterator = tqdm(train_dataloader, desc=f"Processing epoch: {epoch}")
+        batch_iterator = tqdm(train_dataloader, desc=f"Processing epoch: {epoch}", leave=False)
 
         for batch in batch_iterator:
             encoder_input = batch["encoder_input"].to(device)  # b, seq_len
@@ -195,6 +210,7 @@ def train(config):
             global_step,
             writer,
             num_examples=config["num_examples"],
+            verbose=config["verbose"]
         )
         # Save Model
 
