@@ -120,17 +120,7 @@ def run_validation(
 def test(config):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     data_file = Path(config["data_folder"]) / "reddit.csv"
-
-    
-    one_day_ago_delta = timedelta(days=1)
-    train_dataset = RedditDataset(
-        data_file, 
-        sequence_length=560, 
-        is_train=True, 
-        train_split_perc=0.8,
-        is_date=True,
-        date_split=(datetime.now() - one_day_ago_delta)
-    )
+    one_day_ago_delta = timedelta(days=config["test_window"])
     test_dataset = RedditDataset(
         data_file, 
         sequence_length=560, 
@@ -156,7 +146,6 @@ def test(config):
             test_dataset.input_tokenizer.get_vocab_size(),
             test_dataset.output_tokenizer.get_vocab_size(),
         ).to(device)
-        print(model_path)
         run_id, artifact_path =  model_path.split(":")
         mlflow.artifacts.download_artifacts(
             run_id=run_id,
@@ -168,24 +157,8 @@ def test(config):
         os.remove(artifact_path)
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
-        print(f"Train Examples: {len(train_dataset)}")
         print(f"Test Examples: {len(test_dataset)}")
-        train_dataloader = DataLoader(
-            train_dataset, batch_size=1
-        )
         test_dataloader = DataLoader(test_dataset, batch_size=1)
-        
-        train_performance = run_validation(
-            model,
-            train_dataloader,
-            train_dataset.input_tokenizer,
-            train_dataset.output_tokenizer,
-            config["max_len"],
-            device,
-            0,
-            num_examples=config["num_examples"],
-            verbose=False,
-        )
         test_performance = run_validation(
             model,
             test_dataloader,
@@ -194,12 +167,12 @@ def test(config):
             config["max_len"],
             device,
             0,
-            num_examples=config["num_examples"],
+            num_examples=len(test_dataloader),
             verbose=False,
         )
         if test_performance < 0.5:
             return False
-        if test_performance < train_performance-0.1:
+        if test_performance < best_performance-0.05:
             return False
     # No model we need to train
     return True
