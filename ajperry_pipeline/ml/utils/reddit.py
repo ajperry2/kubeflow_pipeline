@@ -156,10 +156,12 @@ def train(config):
         initial_epoch = 0
         global_step = 0
         client = MlflowClient(mlflow.get_tracking_uri())
-        previous_models = client.get_latest_versions(config["experiment_name"])
         # best_uri = None
         best_performance = 0
-        if previous_models:
+        model_name = config["experiment_name"]
+        registered_models = mlflow.search_registered_models(filter_string=f"name = '{model_name}'")
+        if registered_models:
+            previous_models = client.get_latest_versions(config["experiment_name"])
             for prev_model in previous_models:
                 if "performance" in prev_model.tags and best_performance > float(
                     prev_model.tags["performance"]
