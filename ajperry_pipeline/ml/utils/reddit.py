@@ -1,14 +1,14 @@
 from pathlib import Path
 import torch
 import torch.nn as nn
-from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 from ajperry_pipeline.ml.models.transformer import build_transformer
 from ajperry_pipeline.ml.data.reddit import RedditDataset
 from tqdm import tqdm
 import torchtext.data.metrics as metrics
-from mlflow.tracking import MlflowClient
 import mlflow
+from mlflow.tracking import MlflowClient
+
 
 def get_weights_file_path(config, epoch):
     model_folder = config["model_folder"]
@@ -60,7 +60,7 @@ def greedy_decode(
             break
     return decoder_input.squeeze(0)
 
-            
+
 def run_validation(
     model,
     validation_ds,
@@ -71,7 +71,7 @@ def run_validation(
     print_msg,
     global_step,
     num_examples=2,
-    verbose=False
+    verbose=False,
 ):
     model.eval()
     count = 0
@@ -108,27 +108,22 @@ def run_validation(
             if count == num_examples:
                 break
     candidate_corpus = [
-        list(model_out_text.split())
-        for model_out_text in predicted_texts
+        list(model_out_text.split()) for model_out_text in predicted_texts
     ]
     # Example reference translations (each candidate can have multiple references, also of varying lengths)
-    references_corpus = [
-        [list(target_text.split())]
-        for target_text in expected_texts
-    ]
+    references_corpus = [[list(target_text.split())] for target_text in expected_texts]
     bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=4)
     if verbose:
         print_msg(f"BLEU Score: {bleu_score}")
     mlflow.log_metric("test_bleu", bleu_score, global_step=global_step)
+    return bleu_score
 
 
 def train(config):
-    
-
     with mlflow.start_run(run_name=config["experiment_name"]) as run:
-        for k,v in config.items():
+        for k, v in config.items():
             mlflow.log_param(k, v)
-        
+
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Device: {device}")
 
@@ -156,18 +151,21 @@ def train(config):
             train_dataset.output_tokenizer.get_vocab_size(),
         ).to(device)
 
-
         optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], eps=1e-9)
 
         initial_epoch = 0
         global_step = 0
-        # if config["preload"]:
-        #     model_filename = get_weights_file_path(config, config["preload"])
-        #     print(f"Preloading Model: {model_filename}")
-        #     state = torch.load(model_filename)
-        #     initial_epoch = state["epoch"] + 1
-        #     optimizer.load_state_dict(state["optimizer_state_dict"])
-        #     global_step = state["global_step"]
+        client = MlflowClient(mlflow.get_tracking_uri())
+        previous_models = client.get_latest_versions(config["model_name"])
+        # best_uri = None
+        best_performance = 0
+        if previous_models:
+            for prev_model in previous_models:
+                if "performance" in prev_model.tags and best_performance > float(
+                    prev_model.tags["performance"]
+                ):
+                    best_performance = prev_model.tags["performance"]
+                    # best_uri = prev_model.source
 
         loss_fn = nn.CrossEntropyLoss(
             ignore_index=train_dataset.input_tokenizer.token_to_id("[PAD]"),
@@ -176,13 +174,17 @@ def train(config):
 
         for epoch in range(initial_epoch, config["num_epochs"]):
             model.train()
-            batch_iterator = tqdm(train_dataloader, desc=f"Processing epoch: {epoch}", leave=False)
+            batch_iterator = tqdm(
+                train_dataloader, desc=f"Processing epoch: {epoch}", leave=False
+            )
 
             for batch in batch_iterator:
                 encoder_input = batch["encoder_input"].to(device)  # b, seq_len
                 decoder_input = batch["decoder_input"].to(device)  # b, seq_len
                 encoder_mask = batch["encoder_mask"].to(device)  # b, 1, 1, seq_len
-                decoder_mask = batch["decoder_mask"].to(device)  # b, 1, seq_len, seq_len
+                decoder_mask = batch["decoder_mask"].to(
+                    device
+                )  # b, 1, seq_len, seq_len
 
                 encoder_output = model.encode(
                     encoder_input, encoder_mask
@@ -195,16 +197,18 @@ def train(config):
                 label = batch["label"].to(device)  # b, seq_len
 
                 loss = loss_fn(
-                    proj_output.view(-1, train_dataset.output_tokenizer.get_vocab_size()),
+                    proj_output.view(
+                        -1, train_dataset.output_tokenizer.get_vocab_size()
+                    ),
                     label.view(-1),
                 )
                 batch_iterator.set_postfix({"loss": f"{loss.item():6.3f}"})
-                mlflow.log_metric("train_loss",loss.item(), step=global_step)
+                mlflow.log_metric("train_loss", loss.item(), step=global_step)
                 loss.backward()
                 optimizer.step()
                 optimizer.zero_grad()
                 global_step += 1
-            run_validation(
+            performance = run_validation(
                 model,
                 test_dataloader,
                 test_dataloader.dataset.input_tokenizer,
@@ -214,17 +218,22 @@ def train(config):
                 lambda x: batch_iterator.write(x),
                 global_step,
                 num_examples=config["num_examples"],
-                verbose=config["verbose"]
+                verbose=config["verbose"],
             )
             # Save Model
-
-            model_filename = get_weights_file_path(config, f"{epoch:02d}")
-            torch.save(
-                {
-                    "epoch": epoch,
-                    "model_state_dict": model.state_dict(),
-                    "optimizer_state_dict": optimizer.state_dict(),
-                    "global_step": global_step,
-                },
-                model_filename,
-            )
+            if performance > best_performance:
+                mlflow.pytorch.log_model(
+                    model,
+                    config["model_name"],
+                    registered_model_name=config["model_name"],
+                )
+                model_uri = f"{run.info.artifact_uri}/model"
+                client = MlflowClient(mlflow.get_tracking_uri())
+                model_info = client.get_latest_versions(config["model_name"])[0]
+                client.set_model_version_tag(
+                    name=config["model_name"],
+                    version=model_info.version,
+                    key="performance",
+                    value=performance,
+                )
+                return model_uri
