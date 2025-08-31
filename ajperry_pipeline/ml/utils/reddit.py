@@ -128,14 +128,14 @@ def train(config):
         print(f"Device: {device}")
 
         Path(config["model_folder"]).mkdir(parents=True, exist_ok=True)
-
+        data_file = Path(config["data_folder"]) / "reddit.csv"
         # Make Datasets
         train_dataset = RedditDataset(
-            "reddit.csv", sequence_length=560, is_train=True, train_split_perc=0.8
+            data_file, sequence_length=560, is_train=True, train_split_perc=0.8
         )
         mlflow.log_param("TrainingSamples", len(train_dataset))
         test_dataset = RedditDataset(
-            "reddit.csv", sequence_length=560, is_train=False, train_split_perc=0.8
+            data_file, sequence_length=560, is_train=False, train_split_perc=0.8
         )
         mlflow.log_param("TestSamples", len(test_dataset))
 
