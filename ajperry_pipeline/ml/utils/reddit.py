@@ -4,10 +4,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from ajperry_pipeline.ml.models.transformer import build_transformer
 from ajperry_pipeline.ml.data.reddit import RedditDataset
-from tqdm import tqdm
 import torchtext.data.metrics as metrics
 import mlflow
-from mlflow.tracking import MlflowClient
+from datetime import datetime, timedelta
+import os
 
 
 def get_weights_file_path(config, epoch):
@@ -68,7 +68,6 @@ def run_validation(
     tokenizer_tgt,
     max_len,
     device,
-    print_msg,
     global_step,
     num_examples=2,
     verbose=False,
@@ -101,10 +100,10 @@ def run_validation(
             expected_texts.append(target_text)
             predicted_texts.append(model_out_text)
             if verbose:
-                print_msg("-" * console_width)
-                print_msg(f"Source:\t{source_text}")
-                print_msg(f"Target:\t{target_text}")
-                print_msg(f"Predicted:\t{model_out_text}")
+                print("-" * console_width)
+                print(f"Source:\t{source_text}")
+                print(f"Target:\t{target_text}")
+                print(f"Predicted:\t{model_out_text}")
             if count == num_examples:
                 break
     candidate_corpus = [
@@ -114,18 +113,103 @@ def run_validation(
     references_corpus = [[list(target_text.split())] for target_text in expected_texts]
     bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=4)
     if verbose:
-        print_msg(f"BLEU Score: {bleu_score}")
+        print(f"BLEU Score: {bleu_score}")
     mlflow.log_metric("test_bleu", bleu_score, step=global_step)
     return bleu_score
 
+def test(config):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    data_file = Path(config["data_folder"]) / "reddit.csv"
 
+    
+    one_day_ago_delta = timedelta(days=1)
+    train_dataset = RedditDataset(
+        data_file, 
+        sequence_length=560, 
+        is_train=True, 
+        train_split_perc=0.8,
+        is_date=True,
+        date_split=(datetime.now() - one_day_ago_delta)
+    )
+    test_dataset = RedditDataset(
+        data_file, 
+        sequence_length=560, 
+        is_train=False, 
+        train_split_perc=0.8,
+        is_date=True,
+        date_split=(datetime.now() - one_day_ago_delta)
+    )
+    runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
+    model_path = ""
+    best_performance = 0
+    if len(runs) > 0:
+        for run in runs:
+            if "performance" in run.tags and best_performance > float(
+                run.tags["performance"]
+            ):
+                best_performance = run.tags["performance"]
+                model_path = run.tags["model_path"]
+    if model_path != "":
+        # make model
+        model = make_model(
+            config,
+            test_dataset.input_tokenizer.get_vocab_size(),
+            test_dataset.output_tokenizer.get_vocab_size(),
+        ).to(device)
+        print(model_path)
+        run_id, artifact_path =  model_path.split(":")
+        mlflow.artifacts.download_artifacts(
+            run_id=run_id,
+            artifact_path=artifact_path,
+            dst_path=artifact_path
+        )
+        assert artifact_path.endswith(".pth")
+        checkpoint = torch.load(artifact_path, map_location=device)
+        os.remove(artifact_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model.eval()
+        print(f"Train Examples: {len(train_dataset)}")
+        print(f"Test Examples: {len(test_dataset)}")
+        train_dataloader = DataLoader(
+            train_dataset, batch_size=1
+        )
+        test_dataloader = DataLoader(test_dataset, batch_size=1)
+        
+        train_performance = run_validation(
+            model,
+            train_dataloader,
+            train_dataset.input_tokenizer,
+            train_dataset.output_tokenizer,
+            config["max_len"],
+            device,
+            0,
+            num_examples=config["num_examples"],
+            verbose=False,
+        )
+        test_performance = run_validation(
+            model,
+            test_dataloader,
+            test_dataset.input_tokenizer,
+            test_dataset.output_tokenizer,
+            config["max_len"],
+            device,
+            0,
+            num_examples=config["num_examples"],
+            verbose=False,
+        )
+        if test_performance < 0.5:
+            return False
+        if test_performance < train_performance-0.1:
+            return False
+    # No model we need to train
+    return True
+        
 def train(config):
-    with mlflow.start_run(run_name=config["experiment_name"]) as run:
+    with mlflow.start_run(run_name=config["experiment_name"],) as run:
         for k, v in config.items():
             mlflow.log_param(k, v)
 
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Device: {device}")
 
         Path(config["model_folder"]).mkdir(parents=True, exist_ok=True)
         data_file = Path(config["data_folder"]) / "reddit.csv"
@@ -150,24 +234,32 @@ def train(config):
             train_dataset.input_tokenizer.get_vocab_size(),
             train_dataset.output_tokenizer.get_vocab_size(),
         ).to(device)
-
-        optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], eps=1e-9)
-
         initial_epoch = 0
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], eps=1e-9)
+        if config["finetune"] != "":
+            run_id, artifact_path = config["finetune"].split(":")
+            mlflow.artifacts.download_artifacts(
+                run_id=run_id,
+                artifact_path=artifact_path,
+                dst_path=artifact_path
+            )
+            assert artifact_path.endswith(".pth")
+            checkpoint = torch.load(artifact_path, map_location=device)
+            os.remove(artifact_path)
+            model.load_state_dict(checkpoint['model_state_dict'])
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            initial_epoch = checkpoint['epoch']
+
         global_step = 0
-        client = MlflowClient(mlflow.get_tracking_uri())
         # best_uri = None
         best_performance = 0
-        model_name = config["experiment_name"]
-        registered_models = mlflow.search_registered_models(filter_string=f"name = '{model_name}'")
-        if registered_models:
-            previous_models = client.get_latest_versions(config["experiment_name"])
-            for prev_model in previous_models:
-                if "performance" in prev_model.tags and best_performance > float(
-                    prev_model.tags["performance"]
+        runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
+        if len(runs) > 0:
+            for run in runs:
+                if "performance" in run.tags and best_performance > float(
+                    run.tags["performance"]
                 ):
-                    best_performance = prev_model.tags["performance"]
-                    # best_uri = prev_model.source
+                    best_performance = run.tags["performance"]
 
         loss_fn = nn.CrossEntropyLoss(
             ignore_index=train_dataset.input_tokenizer.token_to_id("[PAD]"),
@@ -176,11 +268,9 @@ def train(config):
 
         for epoch in range(initial_epoch, config["num_epochs"]):
             model.train()
-            batch_iterator = tqdm(
-                train_dataloader, desc=f"Processing epoch: {epoch}", leave=False
-            )
 
-            for batch in batch_iterator:
+
+            for batch in train_dataloader:
                 encoder_input = batch["encoder_input"].to(device)  # b, seq_len
                 decoder_input = batch["decoder_input"].to(device)  # b, seq_len
                 encoder_mask = batch["encoder_mask"].to(device)  # b, 1, 1, seq_len
@@ -200,11 +290,11 @@ def train(config):
 
                 loss = loss_fn(
                     proj_output.view(
-                        -1, train_dataset.output_tokenizer.get_vocab_size()
+                        -1, 
+                        train_dataset.output_tokenizer.get_vocab_size()
                     ),
                     label.view(-1),
                 )
-                batch_iterator.set_postfix({"loss": f"{loss.item():6.3f}"})
                 mlflow.log_metric("train_loss", loss.item(), step=global_step)
                 loss.backward()
                 optimizer.step()
@@ -217,25 +307,18 @@ def train(config):
                 test_dataloader.dataset.output_tokenizer,
                 config["seq_len"],
                 device,
-                lambda x: batch_iterator.write(x),
                 global_step,
                 num_examples=config["num_examples"],
                 verbose=config["verbose"],
             )
             # Save Model
             if performance > best_performance:
-                mlflow.pytorch.log_model(
-                    model,
-                    config["experiment_name"],
-                    registered_model_name=config["experiment_name"],
-                )
-                model_uri = f"{run.info.artifact_uri}/model"
-                client = MlflowClient(mlflow.get_tracking_uri())
-                model_info = client.get_latest_versions(config["experiment_name"])[0]
-                client.set_model_version_tag(
-                    name=config["experiment_name"],
-                    version=model_info.version,
-                    key="performance",
-                    value=performance,
-                )
-                return model_uri
+                best_performance = performance
+                torch.save({
+                    'epoch': epoch,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                }, f"{config['experiment_name']}_{run.info.run_id}.pth")
+                mlflow.log_artifact(f"{config['experiment_name']}.pth")
+                mlflow.set_tag("model_path", f"{run.info.run_id}:{config['experiment_name']}.pth")
+                mlflow.set_tag("performance", performance)

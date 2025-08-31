@@ -6,7 +6,7 @@ from tokenizers.trainers import WordLevelTrainer
 from tokenizers.pre_tokenizers import Whitespace
 import pandas as pd
 from zlib import crc32
-
+from datetime import datetime
 
 def string_to_float_hash(s, encoding="utf-8"):
     """
@@ -35,23 +35,41 @@ class RedditDataset(Dataset):
         sequence_length: int,
         is_train: bool,
         train_split_perc: float = 0.8,
+        is_date: bool = False,
+        date_split: datetime = datetime.now()
     ):
         def selected(data_id):
-            hash_val = string_to_float_hash(data_id)
-            return (
-                is_train
-                and hash_val <= train_split_perc
-                or not is_train
-                and hash_val > train_split_perc
-            )
+            if is_date:
+                hash_val = datetime.strptime(data_id, "%Y-%m-%d %H:%M:%S")
+                return (
+                    is_train
+                    and hash_val <= date_split
+                    or not is_train
+                    and hash_val > date_split
+                )
+            else:
+                hash_val = string_to_float_hash(data_id)
+                return (
+                    is_train
+                    and hash_val <= train_split_perc
+                    or not is_train
+                    and hash_val > train_split_perc
+                )
 
         def select_train(data_id):
-            hash_val = string_to_float_hash(data_id)
-            return hash_val <= train_split_perc
+            if is_date:
+                hash_val = datetime.strptime(data_id, "%Y-%m-%d %H:%M:%S")
+                return hash_val <= date_split
+            else:
+                hash_val = string_to_float_hash(data_id)
+                return hash_val <= train_split_perc
 
         self.all_data = pd.read_csv(data_path)
         # collect train
-        self.all_data["selected"] = self.all_data["id"].apply(select_train)
+        if is_date:
+            self.all_data["selected"] = self.all_data["date_added"].apply(select_train)
+        else:
+            self.all_data["selected"] = self.all_data["id"].apply(select_train)
 
         # build tokenizers from all training data
         input_tokenizer = Tokenizer(WordLevel(unk_token="[UNK]"))
@@ -75,7 +93,11 @@ class RedditDataset(Dataset):
         self.output_tokenizer = output_tokenizer
 
         # Switch selection based on to train/test
-        self.all_data["selected"] = self.all_data["id"].apply(selected)
+        # collect train
+        if is_date:
+            self.all_data["selected"] = self.all_data["date_added"].apply(selected)
+        else:
+            self.all_data["selected"] = self.all_data["id"].apply(selected)
         self.all_data = self.all_data[self.all_data["selected"]]
 
         # convenience variables
