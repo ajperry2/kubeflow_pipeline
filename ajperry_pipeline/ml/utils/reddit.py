@@ -281,6 +281,7 @@ def train(config):
                 num_examples=config["num_examples"],
                 verbose=config["verbose"],
             )
+            mlflow.log_metric("train_bleu", performance, step=global_step)
             # Save Model
             if performance > best_performance:
                 best_performance = performance
