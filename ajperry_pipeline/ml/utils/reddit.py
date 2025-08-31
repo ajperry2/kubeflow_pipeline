@@ -156,7 +156,7 @@ def train(config):
         initial_epoch = 0
         global_step = 0
         client = MlflowClient(mlflow.get_tracking_uri())
-        previous_models = client.get_latest_versions(config["model_name"])
+        previous_models = client.get_latest_versions(config["experiment_name"])
         # best_uri = None
         best_performance = 0
         if previous_models:
@@ -224,14 +224,14 @@ def train(config):
             if performance > best_performance:
                 mlflow.pytorch.log_model(
                     model,
-                    config["model_name"],
-                    registered_model_name=config["model_name"],
+                    config["experiment_name"],
+                    registered_model_name=config["experiment_name"],
                 )
                 model_uri = f"{run.info.artifact_uri}/model"
                 client = MlflowClient(mlflow.get_tracking_uri())
-                model_info = client.get_latest_versions(config["model_name"])[0]
+                model_info = client.get_latest_versions(config["experiment_name"])[0]
                 client.set_model_version_tag(
-                    name=config["model_name"],
+                    name=config["experiment_name"],
                     version=model_info.version,
                     key="performance",
                     value=performance,
