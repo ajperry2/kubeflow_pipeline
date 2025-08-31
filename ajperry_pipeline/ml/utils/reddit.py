@@ -7,6 +7,8 @@ from ajperry_pipeline.ml.models.transformer import build_transformer
 from ajperry_pipeline.ml.data.reddit import RedditDataset
 from tqdm import tqdm
 import torchtext.data.metrics as metrics
+from mlflow.tracking import MlflowClient
+import mlflow
 
 def get_weights_file_path(config, epoch):
     model_folder = config["model_folder"]
@@ -68,7 +70,6 @@ def run_validation(
     device,
     print_msg,
     global_step,
-    writer,
     num_examples=2,
     verbose=False
 ):
@@ -118,109 +119,112 @@ def run_validation(
     bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=4)
     if verbose:
         print_msg(f"BLEU Score: {bleu_score}")
-    writer.add_scalar("test_bleu", bleu_score, global_step=global_step)
-    writer.flush()
+    mlflow.log_metric("test_bleu", bleu_score, global_step=global_step)
+
 
 def train(config):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device: {device}")
+    
 
-    Path(config["model_folder"]).mkdir(parents=True, exist_ok=True)
+    with mlflow.start_run(run_name=config["experiment_name"]) as run:
+        for k,v in config.items():
+            mlflow.log_param(k, v)
+        
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Device: {device}")
 
-    # Make Datasets
-    train_dataset = RedditDataset(
-        "reddit.csv", sequence_length=560, is_train=True, train_split_perc=0.8
-    )
-    test_dataset = RedditDataset(
-        "reddit.csv", sequence_length=560, is_train=False, train_split_perc=0.8
-    )
+        Path(config["model_folder"]).mkdir(parents=True, exist_ok=True)
 
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=config["batch_size"], shuffle=True
-    )
-    test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
+        # Make Datasets
+        train_dataset = RedditDataset(
+            "reddit.csv", sequence_length=560, is_train=True, train_split_perc=0.8
+        )
+        mlflow.log_param("TrainingSamples", len(train_dataset))
+        test_dataset = RedditDataset(
+            "reddit.csv", sequence_length=560, is_train=False, train_split_perc=0.8
+        )
+        mlflow.log_param("TestSamples", len(test_dataset))
 
-    # make model
-    model = make_model(
-        config,
-        train_dataset.input_tokenizer.get_vocab_size(),
-        train_dataset.output_tokenizer.get_vocab_size(),
-    ).to(device)
+        train_dataloader = DataLoader(
+            train_dataset, batch_size=config["batch_size"], shuffle=True
+        )
+        test_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=True)
 
-    writer = SummaryWriter(config["experiment_name"])
+        # make model
+        model = make_model(
+            config,
+            train_dataset.input_tokenizer.get_vocab_size(),
+            train_dataset.output_tokenizer.get_vocab_size(),
+        ).to(device)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], eps=1e-9)
 
-    initial_epoch = 0
-    global_step = 0
-    if config["preload"]:
-        model_filename = get_weights_file_path(config, config["preload"])
-        print(f"Preloading Model: {model_filename}")
-        state = torch.load(model_filename)
-        initial_epoch = state["epoch"] + 1
-        optimizer.load_state_dict(state["optimizer_state_dict"])
-        global_step = state["global_step"]
+        optimizer = torch.optim.AdamW(model.parameters(), lr=config["lr"], eps=1e-9)
 
-    loss_fn = nn.CrossEntropyLoss(
-        ignore_index=train_dataset.input_tokenizer.token_to_id("[PAD]"),
-        label_smoothing=0.1,
-    ).to(device)
+        initial_epoch = 0
+        global_step = 0
+        # if config["preload"]:
+        #     model_filename = get_weights_file_path(config, config["preload"])
+        #     print(f"Preloading Model: {model_filename}")
+        #     state = torch.load(model_filename)
+        #     initial_epoch = state["epoch"] + 1
+        #     optimizer.load_state_dict(state["optimizer_state_dict"])
+        #     global_step = state["global_step"]
 
-    for epoch in range(initial_epoch, config["num_epochs"]):
-        model.train()
-        batch_iterator = tqdm(train_dataloader, desc=f"Processing epoch: {epoch}", leave=False)
+        loss_fn = nn.CrossEntropyLoss(
+            ignore_index=train_dataset.input_tokenizer.token_to_id("[PAD]"),
+            label_smoothing=0.1,
+        ).to(device)
 
-        for batch in batch_iterator:
-            encoder_input = batch["encoder_input"].to(device)  # b, seq_len
-            decoder_input = batch["decoder_input"].to(device)  # b, seq_len
-            encoder_mask = batch["encoder_mask"].to(device)  # b, 1, 1, seq_len
-            decoder_mask = batch["decoder_mask"].to(device)  # b, 1, seq_len, seq_len
+        for epoch in range(initial_epoch, config["num_epochs"]):
+            model.train()
+            batch_iterator = tqdm(train_dataloader, desc=f"Processing epoch: {epoch}", leave=False)
 
-            encoder_output = model.encode(
-                encoder_input, encoder_mask
-            )  # b, seq_len, d_model
-            decoder_output = model.decode(
-                encoder_output, encoder_mask, decoder_input, decoder_mask
-            )  # b, seq_len, d_model
-            proj_output = model.project(decoder_output)
+            for batch in batch_iterator:
+                encoder_input = batch["encoder_input"].to(device)  # b, seq_len
+                decoder_input = batch["decoder_input"].to(device)  # b, seq_len
+                encoder_mask = batch["encoder_mask"].to(device)  # b, 1, 1, seq_len
+                decoder_mask = batch["decoder_mask"].to(device)  # b, 1, seq_len, seq_len
 
-            label = batch["label"].to(device)  # b, seq_len
+                encoder_output = model.encode(
+                    encoder_input, encoder_mask
+                )  # b, seq_len, d_model
+                decoder_output = model.decode(
+                    encoder_output, encoder_mask, decoder_input, decoder_mask
+                )  # b, seq_len, d_model
+                proj_output = model.project(decoder_output)
 
-            loss = loss_fn(
-                proj_output.view(-1, train_dataset.output_tokenizer.get_vocab_size()),
-                label.view(-1),
+                label = batch["label"].to(device)  # b, seq_len
+
+                loss = loss_fn(
+                    proj_output.view(-1, train_dataset.output_tokenizer.get_vocab_size()),
+                    label.view(-1),
+                )
+                batch_iterator.set_postfix({"loss": f"{loss.item():6.3f}"})
+                mlflow.log_metric("train_loss",loss.item(), step=global_step)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+                global_step += 1
+            run_validation(
+                model,
+                test_dataloader,
+                test_dataloader.dataset.input_tokenizer,
+                test_dataloader.dataset.output_tokenizer,
+                config["seq_len"],
+                device,
+                lambda x: batch_iterator.write(x),
+                global_step,
+                num_examples=config["num_examples"],
+                verbose=config["verbose"]
             )
-            batch_iterator.set_postfix({"loss": f"{loss.item():6.3f}"})
+            # Save Model
 
-            writer.add_scalar("train_loss", loss.item(), global_step=global_step)
-            writer.flush()
-
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-            global_step += 1
-        run_validation(
-            model,
-            test_dataloader,
-            test_dataloader.dataset.input_tokenizer,
-            test_dataloader.dataset.output_tokenizer,
-            config["seq_len"],
-            device,
-            lambda x: batch_iterator.write(x),
-            global_step,
-            writer,
-            num_examples=config["num_examples"],
-            verbose=config["verbose"]
-        )
-        # Save Model
-
-        model_filename = get_weights_file_path(config, f"{epoch:02d}")
-        torch.save(
-            {
-                "epoch": epoch,
-                "model_state_dict": model.state_dict(),
-                "optimizer_state_dict": optimizer.state_dict(),
-                "global_step": global_step,
-            },
-            model_filename,
-        )
+            model_filename = get_weights_file_path(config, f"{epoch:02d}")
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model_state_dict": model.state_dict(),
+                    "optimizer_state_dict": optimizer.state_dict(),
+                    "global_step": global_step,
+                },
+                model_filename,
+            )
