@@ -11,6 +11,7 @@ import ajperry_pipeline
 
 app = typer.Typer()
 
+
 @app.command()
 def launch_run(
     host: Annotated[str, typer.Option()],
@@ -21,36 +22,26 @@ def launch_run(
     experiment: Annotated[str, typer.Option()],
     run: Annotated[Optional[str], typer.Option()] = None,
     args: Annotated[Optional[str], typer.Option()] = "{}",
-):  
-
+):
     if run is None:
         alphabet = string.ascii_letters + string.digits
-        run = ''.join(random.choice(alphabet) for i in range(20))
+        run = "".join(random.choice(alphabet) for i in range(20))
 
-    pipeline_func = getattr(
-        ajperry_pipeline.pipelines, pipeline
-    )
-    
+    pipeline_func = getattr(ajperry_pipeline.pipelines, pipeline)
+
     auth_session = get_istio_auth_session(
-        url=f"https://{host}",
-        username=username,
-        password=password
+        url=f"https://{host}", username=username, password=password
     )
     client = kfp.Client(
-        host=f"https://{host}/pipeline",
-        cookies=auth_session["session_cookie"]
+        host=f"https://{host}/pipeline", cookies=auth_session["session_cookie"]
     )
     # Get definition of experiment/run
     # Make experiment if it does not exist
     try:
-        client.get_experiment(
-            experiment_name=experiment, namespace=namespace
-        )
+        client.get_experiment(experiment_name=experiment, namespace=namespace)
     except ValueError:
-        client.create_experiment(
-            name=experiment, namespace=namespace
-        )
-    client.create_run_from_pipeline_func( 
+        client.create_experiment(name=experiment, namespace=namespace)
+    client.create_run_from_pipeline_func(
         pipeline_func=pipeline_func,
         arguments=json.loads(args),
         experiment_name=experiment,

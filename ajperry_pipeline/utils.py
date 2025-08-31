@@ -16,16 +16,15 @@ def get_istio_auth_session(url: str, username: str, password: str) -> dict:
     """
     # define the default return object
     auth_session = {
-        "endpoint_url": url,    # KF endpoint URL
-        "redirect_url": None,   # KF redirect URL, if applicable
+        "endpoint_url": url,  # KF endpoint URL
+        "redirect_url": None,  # KF redirect URL, if applicable
         "dex_login_url": None,  # Dex login URL (for POST of credentials)
-        "is_secured": None,     # True if KF endpoint is secured
-        "session_cookie": None  # Resulting session cookies in the form "key1=value1; key2=value2"
+        "is_secured": None,  # True if KF endpoint is secured
+        "session_cookie": None,  # Resulting session cookies in the form "key1=value1; key2=value2"
     }
 
     # use a persistent session (for cookies)
     with requests.Session() as s:
-
         ################
         # Determine if Endpoint is Secured
         ################
@@ -78,7 +77,7 @@ def get_istio_auth_session(url: str, username: str, password: str) -> dict:
         resp = s.post(
             auth_session["dex_login_url"],
             data={"login": username, "password": password},
-            allow_redirects=True
+            allow_redirects=True,
         )
         if len(resp.history) == 0:
             raise RuntimeError(
@@ -87,6 +86,8 @@ def get_istio_auth_session(url: str, username: str, password: str) -> dict:
             )
 
         # store the session cookies in a "key1=value1; key2=value2" string
-        auth_session["session_cookie"] = "; ".join([f"{c.name}={c.value}" for c in s.cookies])
+        auth_session["session_cookie"] = "; ".join(
+            [f"{c.name}={c.value}" for c in s.cookies]
+        )
 
     return auth_session
