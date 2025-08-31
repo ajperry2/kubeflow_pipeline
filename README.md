@@ -1,9 +1,15 @@
 # Kubeflow Pipelines
 
+## Baremetal Usage
 
-## Usage
+1. Run notebook `notebooks/reddit_training.ipynb`
+    - Define hyperparameters that make sense for your system
+2. Metrics are recorded locally and can be observed with locally running mlflow or with the `verbose=true` options, test examples are printed to `standard out`
 
-1. Upload notebook 
+
+## Kubeflow Usage
+
+1. Upload notebook `notebooks/pipeline_management.ipynb`
 2. Define environment variables
 3. Run cells defining training pipeline
 3. Run/Schedule pipeline
