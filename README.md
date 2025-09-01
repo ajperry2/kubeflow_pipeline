@@ -1,5 +1,31 @@
 # Kubeflow Pipelines
 
+## Purpose
+
+The purpose of this repository is a place to learn new things. From infrastructure to new LLM training techniques.
+
+## State
+
+Data: Currently I have a functional transformer pipeline which learns common n-grams in human speech. This is due to the lack of data primarily. 
+
+Model: The transformer model is tested, and has been compared to other implementation. It's prediction time is sensible and small enough for my local hardware.
+
+## Future Work
+
+**Improved ML**: Currently only supervised learning is employed, I expect the performance will plateau without reinforcement learning with human feedback (RLHF). This is to be added to the reddit pipeline.
+
+**Improved Logging**: After training I'd like a set of input output pairs logged to MlFlow for increased transparency to output deficiencies.
+
+
+
+## Pipelines
+1. [Reddit](#reddit) Iteratively learning to create engaging posts with reddit data.
+
+
+
+# Reddit
+
+
 ## Baremetal Usage
 
 1. Run notebook `notebooks/reddit_training.ipynb`
@@ -9,7 +35,7 @@
 
 ## Kubeflow Usage
 
-1. Upload notebook `notebooks/pipeline_management.ipynb`
+1. Upload notebook `notebooks/reddit_pipeline.ipynb`
 2. Define environment variables
 3. Run cells defining training pipeline
 3. Run/Schedule pipeline
