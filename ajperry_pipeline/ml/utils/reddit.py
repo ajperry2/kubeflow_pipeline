@@ -288,7 +288,8 @@ def train(config):
                 mlflow.log_param(key, value=" ".join(cand))
                 key = f"Sample {i} Reference:"
                 mlflow.log_param(key, value=" ".join(reference[0]))
-                if i == 5: break
+                if i == 5:
+                    break
             mlflow.log_metric("train_bleu", performance, step=global_step)
             # Save Model
             if performance > best_performance:
