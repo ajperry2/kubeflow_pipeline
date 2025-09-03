@@ -106,16 +106,17 @@ def run_validation(
                 print(f"Predicted:\t{model_out_text}")
             if count == num_examples:
                 break
+    
     candidate_corpus = [
         list(model_out_text.split()) for model_out_text in predicted_texts
     ]
     # Example reference translations (each candidate can have multiple references, also of varying lengths)
     references_corpus = [[list(target_text.split())] for target_text in expected_texts]
-    bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=4)
+    bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=8)
     if verbose:
         print(f"BLEU Score: {bleu_score}")
     mlflow.log_metric("test_bleu", bleu_score, step=global_step)
-    return bleu_score
+    return bleu_score, candidate_corpus, references_corpus
 
 def get_best_model(config):
     runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
@@ -163,7 +164,7 @@ def test(config):
         model.eval()
         print(f"Test Examples: {len(test_dataset)}")
         test_dataloader = DataLoader(test_dataset, batch_size=1)
-        test_performance = run_validation(
+        test_performance, candidate_corpus, references_corpus = run_validation(
             model,
             test_dataloader,
             test_dataset.input_tokenizer,
@@ -270,7 +271,7 @@ def train(config):
                 optimizer.step()
                 optimizer.zero_grad()
                 global_step += 1
-            performance = run_validation(
+            performance, candidate_corpus, references_corpus = run_validation(
                 model,
                 test_dataloader,
                 test_dataloader.dataset.input_tokenizer,
@@ -281,6 +282,13 @@ def train(config):
                 num_examples=config["num_examples"],
                 verbose=config["verbose"],
             )
+            
+            for i, cand, reference in enumerate(zip(candidate_corpus, references_corpus)):
+                key = f"Sample {i} Prediction:"
+                mlflow.log_param(key, value=" ".join(cand))
+                key = f"Sample {i} Reference:"
+                mlflow.log_param(key, value=" ".join(reference[0]))
+                if i == 5: break
             mlflow.log_metric("train_bleu", performance, step=global_step)
             # Save Model
             if performance > best_performance:
