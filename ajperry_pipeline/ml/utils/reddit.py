@@ -283,7 +283,7 @@ def train(config):
                 verbose=config["verbose"],
             )
             
-            for i, cand, reference in enumerate(zip(candidate_corpus, references_corpus)):
+            for i, (cand, reference) in enumerate(zip(candidate_corpus, references_corpus)):
                 key = f"Sample {i} Prediction:"
                 mlflow.log_param(key, value=" ".join(cand))
                 key = f"Sample {i} Reference:"
