@@ -112,7 +112,7 @@ def run_validation(
     ]
     # Example reference translations (each candidate can have multiple references, also of varying lengths)
     references_corpus = [[list(target_text.split())] for target_text in expected_texts]
-    bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=8)
+    bleu_score = metrics.bleu_score(candidate_corpus, references_corpus, max_n=8, weights=[1/8]*8)
     if verbose:
         print(f"BLEU Score: {bleu_score}")
     mlflow.log_metric("test_bleu", bleu_score, step=global_step)
