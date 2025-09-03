@@ -283,13 +283,7 @@ def train(config):
                 verbose=config["verbose"],
             )
             
-            for i, (cand, reference) in enumerate(zip(candidate_corpus, references_corpus)):
-                key = f"Sample {i} Prediction:"
-                mlflow.log_param(key, value=" ".join(cand))
-                key = f"Sample {i} Reference:"
-                mlflow.log_param(key, value=" ".join(reference[0]))
-                if i == 5:
-                    break
+
             mlflow.log_metric("train_bleu", performance, step=global_step)
             # Save Model
             if performance > best_performance:
@@ -302,3 +296,10 @@ def train(config):
                 mlflow.log_artifact(f"{config['experiment_name']}.pth")
                 mlflow.set_tag("model_path", f"{run.info.run_id}:{config['experiment_name']}.pth")
                 mlflow.set_tag("performance", performance)
+        for i, (cand, reference) in enumerate(zip(candidate_corpus, references_corpus)):
+            key = f"Sample {i} Prediction:"
+            mlflow.log_param(key, value=" ".join(cand))
+            key = f"Sample {i} Reference:"
+            mlflow.log_param(key, value=" ".join(reference[0]))
+            if i == 5:
+                break
