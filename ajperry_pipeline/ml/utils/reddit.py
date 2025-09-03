@@ -116,7 +116,7 @@ def run_validation(
     if verbose:
         print(f"BLEU Score: {bleu_score}")
     mlflow.log_metric("test_bleu", bleu_score, step=global_step)
-    return bleu_score, candidate_corpus, references_corpus
+    return bleu_score, source_texts, candidate_corpus, references_corpus
 
 def get_best_model(config):
     runs = mlflow.search_runs(experiment_names=[config["experiment_name"]])
@@ -164,7 +164,7 @@ def test(config):
         model.eval()
         print(f"Test Examples: {len(test_dataset)}")
         test_dataloader = DataLoader(test_dataset, batch_size=1)
-        test_performance, candidate_corpus, references_corpus = run_validation(
+        test_performance, source_texts, candidate_corpus, references_corpus = run_validation(
             model,
             test_dataloader,
             test_dataset.input_tokenizer,
@@ -271,7 +271,7 @@ def train(config):
                 optimizer.step()
                 optimizer.zero_grad()
                 global_step += 1
-            performance, candidate_corpus, references_corpus = run_validation(
+            performance, source_texts, candidate_corpus, references_corpus = run_validation(
                 model,
                 test_dataloader,
                 test_dataloader.dataset.input_tokenizer,
@@ -296,7 +296,9 @@ def train(config):
                 mlflow.log_artifact(f"{config['experiment_name']}.pth")
                 mlflow.set_tag("model_path", f"{run.info.run_id}:{config['experiment_name']}.pth")
                 mlflow.set_tag("performance", performance)
-        for i, (cand, reference) in enumerate(zip(candidate_corpus, references_corpus)):
+        for i, (source_text, cand, reference) in enumerate(zip(source_texts, candidate_corpus, references_corpus)):
+            key = f"Sample {i} Input:"
+            mlflow.log_param(key, value=" ".join(source_text))
             key = f"Sample {i} Prediction:"
             mlflow.log_param(key, value=" ".join(cand))
             key = f"Sample {i} Reference:"
