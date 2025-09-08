@@ -117,5 +117,5 @@ def build_transformer(
     # initialize parameters
     for p in transformer.parameters():
         if p.dim() > 1:
-            torch.nn.init.xavier_uniform(p)
+            torch.nn.init.xavier_uniform_(p)
     return transformer
