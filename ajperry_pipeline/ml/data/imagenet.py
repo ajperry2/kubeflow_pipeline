@@ -4,30 +4,37 @@ from torch.utils.data import Dataset
 from pathlib import Path
 
 class ImageNetDataset(Dataset):
-    def __init__(self, root: Path, data_partition = "train", desired_len: int = -1, rotation_degrees=5):
+    def __init__(self, root: Path, data_partition = "train", desired_len: int = -1, rotation_degrees=5, image_size=256):
         self.classes = [line.strip() for line in (root / "wnids.txt").open("r").readlines()]
         self.class_defs = {line.split("\t")[0]:line.split("\t")[1].strip() for line in (root / "words.txt").open("r").readlines()}
         self.is_train = data_partition=="train"
+        self.is_val = data_partition=="val"
+        self.is_test = data_partition=="test"
+        self.image_size = image_size
+        assert self.is_train or self.is_val or self.is_test
         self.rotation_degrees = rotation_degrees
         self._root = root
         self.data_partition = data_partition
-
+        training_transform = transforms.Compose([
+            transforms.Resize(image_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.], std=[0.229, 0.224, 0.225, 1e-16])
+        ])
+        testing_transform = transforms.Compose([
+            transforms.Resize(image_size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.], std=[0.229, 0.224, 0.225, 1e-16])
+        ])
         if self.is_train:
             self.instantiate_training_set()
-            self.transform = transforms.Compose([
-                transforms.Resize(256),
-                transforms.ToTensor(),
-
-                transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.], std=[0.229, 0.224, 0.225, 1e-16])
-            ])
+            self.transform = training_transform
+        elif self.is_val:
+            self.instantiate_val_set()
+            self.transform = training_transform
         else:
             self.instantiate_test_set()
-            self.transform = transforms.Compose([
-                transforms.Resize(256),
-                transforms.CenterCrop(224),
-                transforms.ToTensor(),
-                transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.], std=[0.229, 0.224, 0.225, 1e-16])
-            ])
+            self.transform = testing_transform
+
         # Truncate if requested
         self.length = min(desired_len, len(self.data)) if desired_len!=-1 else len(self.data)
         self.data = self.data[:self.length]
@@ -48,7 +55,7 @@ class ImageNetDataset(Dataset):
                 image_file = image_folder / "images" / image_file
                 self.data.append((image_file, x_min, y_min, x_max, y_max, class_index, class_name_human))
 
-    def instantiate_test_set(self):
+    def instantiate_val_set(self):
         self.data = []
         image_file = self._root / self.data_partition / f"{self.data_partition}_annotations.txt"
         print(image_file)
@@ -63,11 +70,25 @@ class ImageNetDataset(Dataset):
             image_file = self._root / self.data_partition / "images" / image_file
             self.data.append((image_file, x_min, y_min, x_max, y_max, class_index, class_name_human))
 
+    def instantiate_test_set(self):
+        self.data = []
+        image_folder = self._root / self.data_partition / "images"
+        self.data = list(image_folder.glob("*.JPEG"))
+
+
+
     def __getitem__(self, idx):
-        image_file, x_min, y_min, x_max, y_max, class_index, class_name_human = self.data[idx]
-        im = Image.open(image_file).convert("RGBA")
-        im = self.transform(im)
-        return im, class_index
+        if self.is_train or self.is_val:
+            image_file, x_min, y_min, x_max, y_max, class_index, class_name_human = self.data[idx]
+            im = Image.open(image_file).convert("RGBA")
+            im = self.transform(im)
+            return im, class_index
+        else:
+            # Train
+            image_file = self.data[idx]
+            im = Image.open(image_file).convert("RGBA")
+            im = self.transform(im)
+            return im
 
     def __len__(self):
         return self.length
